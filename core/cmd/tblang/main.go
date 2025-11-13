@@ -133,7 +133,6 @@ func init() {
 	
 	// Global flags
 	rootCmd.PersistentFlags().Bool("no-color", false, "Disable colored output")
-	rootCmd.PersistentFlags().String("aws-profile", "kyaw-zin", "AWS profile to use")
 }
 
 func runWithEngine(fn func(context.Context, *engine.Engine) error) error {
@@ -153,12 +152,6 @@ func runWithEngine(fn func(context.Context, *engine.Engine) error) error {
 	// Check for no-color flag
 	if noColor, _ := rootCmd.PersistentFlags().GetBool("no-color"); noColor {
 		color.NoColor = true
-	}
-
-	// Get AWS profile
-	awsProfile, _ := rootCmd.PersistentFlags().GetString("aws-profile")
-	if awsProfile != "" {
-		os.Setenv("AWS_PROFILE", awsProfile)
 	}
 
 	// Initialize TBLang engine
