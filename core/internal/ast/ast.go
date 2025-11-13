@@ -84,3 +84,19 @@ func (a *ArrayLiteral) Evaluate() interface{} {
 	}
 	return result
 }
+
+// ForLoop represents a for loop statement
+type ForLoop struct {
+	Iterator   string
+	Collection Expression
+	Body       []interface{}
+}
+
+// IdentifierExpression represents a variable reference
+type IdentifierExpression struct {
+	Name string
+}
+
+func (i *IdentifierExpression) Evaluate() interface{} {
+	return i.Name
+}

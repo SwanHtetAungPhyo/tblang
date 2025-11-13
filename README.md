@@ -158,6 +158,26 @@ declare my_vpc = vpc("production-vpc", {
 });
 ```
 
+### For Loops
+
+Create multiple resources dynamically:
+
+```tblang
+declare subnets = [
+    { name: "subnet-1", cidr: "10.0.1.0/24" },
+    { name: "subnet-2", cidr: "10.0.2.0/24" }
+];
+
+for config in subnets {
+    declare subnet = subnet(config.name, {
+        cidr_block: config.cidr
+        vpc_id: my_vpc
+    });
+}
+```
+
+See [LOOP_GUIDE.md](LOOP_GUIDE.md) for detailed loop documentation.
+
 ### Resource References
 
 Reference other resources using variable names:

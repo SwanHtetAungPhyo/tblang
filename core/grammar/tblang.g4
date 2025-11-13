@@ -11,6 +11,7 @@ program
 statement
     : blockDeclaration       // cloud_vendor "aws" { ... }
     | variableDeclaration    // declare vpc_configuration = { ... }
+    | forLoop                // for item in list { ... }
     | functionCall           // print(vpc_out) or ec2(...)
     | SEMICOLON              // Empty statement
     ;
@@ -23,6 +24,11 @@ blockDeclaration
 // Variable declaration: declare identifier = expression
 variableDeclaration
     : DECLARE IDENTIFIER ASSIGN expression SEMICOLON?
+    ;
+
+// For loop: for item in collection { statements }
+forLoop
+    : FOR IDENTIFIER IN expression LBRACE statement* RBRACE
     ;
 
 // Properties inside blocks: key = value
@@ -71,6 +77,8 @@ arrayLiteral
 
 // Keywords
 DECLARE : 'declare' ;
+FOR     : 'for' ;
+IN      : 'in' ;
 
 // Literals
 STRING_LITERAL
