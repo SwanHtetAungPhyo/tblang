@@ -1,10 +1,10 @@
 class Tblang < Formula
   desc "Plugin-based Infrastructure as Code language"
   homepage "https://github.com/SwanHtetAungPhyo/tblang"
-  url "https://github.com/SwanHtetAungPhyo/tblang/archive/refs/tags/v0.1.1.tar.gz"
-  sha256 "079450df92dbb1b0f5b24658476789ad6ec4a1fdd27b5222b29343a1d046f67b"
+  url "https://github.com/SwanHtetAungPhyo/tblang/archive/refs/tags/v1.1.0.tar.gz"
+  sha256 "52110c51380414608f98d6a0806d352da1d1dda8ef94d6f2bd173e94f3eb613d"
   license "MIT"
-  version "0.1.1"
+  version "1.1.0"
   head "https://github.com/SwanHtetAungPhyo/tblang.git", branch: "main"
 
   depends_on "go" => :build
