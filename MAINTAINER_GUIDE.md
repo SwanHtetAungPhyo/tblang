@@ -22,22 +22,41 @@ git commit -m "Your commit message"
 git push
 ```
 
-### 4. Update Homebrew Tap
+### 4. Create a New Release
 
 ```bash
-./sync-homebrew.sh
+# Sync with Homebrew (creates tag, release, and updates formula)
+./sync-homebrew.sh 0.1.2  # Replace with your version number
 ```
 
-Or manually:
+This script will:
+- Push your changes to GitHub
+- Create a git tag (e.g., v0.1.2)
+- Create a GitHub release
+- Calculate SHA256 of the tarball
+- Update the Homebrew formula
+- Push to the Homebrew tap
+
+**Manual process (if needed):**
 
 ```bash
-# Copy formula to tap
-cp tblang.rb /opt/homebrew/Library/Taps/swanhtetaungphyo/homebrew-tblang/Formula/
+# 1. Create and push tag
+git tag -a v0.1.2 -m "Release v0.1.2"
+git push origin v0.1.2
 
-# Push tap changes
+# 2. Create GitHub release
+gh release create v0.1.2 --title "v0.1.2" --generate-notes
+
+# 3. Get SHA256
+curl -sL https://github.com/SwanHtetAungPhyo/tblang/archive/refs/tags/v0.1.2.tar.gz | shasum -a 256
+
+# 4. Update tblang.rb with new version, URL, and SHA256
+
+# 5. Copy to tap and push
+cp tblang.rb /opt/homebrew/Library/Taps/swanhtetaungphyo/homebrew-tblang/Formula/
 cd /opt/homebrew/Library/Taps/swanhtetaungphyo/homebrew-tblang
 git add Formula/tblang.rb
-git commit -m "Update TBLang formula"
+git commit -m "Update TBLang to v0.1.2"
 git push
 ```
 
