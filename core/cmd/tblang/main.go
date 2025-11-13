@@ -27,6 +27,12 @@ var rootCmd = &cobra.Command{
 It provides a simple, readable syntax for managing cloud infrastructure
 with a plugin-based architecture supporting multiple cloud providers.`,
 	Version: "1.0.0",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			cmd.Help()
+			printCredits()
+		}
+	},
 }
 
 var planCmd = &cobra.Command{
@@ -119,7 +125,28 @@ var pluginsListCmd = &cobra.Command{
 	},
 }
 
+func printCredits() {
+	cyan := color.New(color.FgCyan, color.Bold)
+	magenta := color.New(color.FgMagenta, color.Bold)
+	yellow := color.New(color.FgYellow)
+	
+	cyan.Println("\n╔════════════════════════════════════════════════════════╗")
+	magenta.Println("║              Developed with ❤️  by                     ║")
+	yellow.Println("║                                                        ║")
+	successColor.Println("║           🚀 Swan Htet Aung Phyo                       ║")
+	successColor.Println("║           🚀 Aung Zayar Moe                            ║")
+	yellow.Println("║                                                        ║")
+	cyan.Println("╚════════════════════════════════════════════════════════╝")
+}
+
 func init() {
+	// Custom version template
+	rootCmd.SetVersionTemplate(`{{with .Name}}{{printf "%s " .}}{{end}}{{printf "version %s" .Version}}
+{{- with .Short}}
+{{.}}{{end}}
+
+` + getCreditsString())
+	
 	// Add subcommands
 	rootCmd.AddCommand(planCmd)
 	rootCmd.AddCommand(applyCmd)
@@ -133,6 +160,20 @@ func init() {
 	
 	// Global flags
 	rootCmd.PersistentFlags().Bool("no-color", false, "Disable colored output")
+}
+
+func getCreditsString() string {
+	cyan := color.New(color.FgCyan, color.Bold)
+	magenta := color.New(color.FgMagenta, color.Bold)
+	green := color.New(color.FgGreen, color.Bold)
+	
+	return cyan.Sprint("╔════════════════════════════════════════════════════════╗\n") +
+		magenta.Sprint("║              Developed with ❤️  by                     ║\n") +
+		cyan.Sprint("║                                                        ║\n") +
+		green.Sprint("║           🚀 Swan Htet Aung Phyo                       ║\n") +
+		green.Sprint("║           🚀 Aung Zayar Moe                            ║\n") +
+		cyan.Sprint("║                                                        ║\n") +
+		cyan.Sprint("╚════════════════════════════════════════════════════════╝")
 }
 
 func runWithEngine(fn func(context.Context, *engine.Engine) error) error {
