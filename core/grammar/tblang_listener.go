@@ -1,7 +1,6 @@
-// Code generated from tblang.g4 by ANTLR 4.13.1. DO NOT EDIT.
+// Code generated from grammar/tblang.g4 by ANTLR 4.13.1. DO NOT EDIT.
 
 package parser // tblang
-
 import "github.com/antlr4-go/antlr/v4"
 
 // tblangListener is a complete listener for a parse tree produced by tblangParser.

@@ -1,0 +1,27 @@
+// Simple loop test for compiler
+
+cloud_vendor "aws" {
+    region = "us-east-1"
+    profile = "kyaw-zin"
+}
+
+// Test 1: Simple array loop
+declare numbers = [1, 2, 3];
+
+for num in numbers {
+    declare test = vpc("test-vpc", {
+        cidr_block: "10.0.0.0/16"
+    });
+}
+
+// Test 2: Object array loop
+declare configs = [
+    { name: "subnet-1", cidr: "10.0.1.0/24" },
+    { name: "subnet-2", cidr: "10.0.2.0/24" }
+];
+
+for config in configs {
+    declare subnet = subnet(config.name, {
+        cidr_block: config.cidr
+    });
+}

@@ -14,6 +14,8 @@ type ASTWalker struct {
 	*parser.BasetblangListener
 	compiler *Compiler
 	variables map[string]interface{}
+	processedContexts map[interface{}]bool // Track contexts we've manually processed
+	inManualExecution bool // Flag to indicate we're manually executing (e.g., in a loop)
 }
 
 // EnterBlockDeclaration handles cloud_vendor blocks
@@ -45,7 +47,59 @@ func (w *ASTWalker) EnterBlockDeclaration(ctx *parser.BlockDeclarationContext) {
 
 // EnterVariableDeclaration handles declare statements
 func (w *ASTWalker) EnterVariableDeclaration(ctx *parser.VariableDeclarationContext) {
+	// Skip if already processed (but not if we're in manual execution mode)
+	if !w.inManualExecution && w.processedContexts != nil && w.processedContexts[ctx] {
+		return
+	}
+	
 	varName := ctx.IDENTIFIER().GetText()
+	
+	// Check if the expression is a function call (resource declaration)
+	expr := ctx.Expression()
+	if exprCtx, ok := expr.(*parser.ExpressionContext); ok {
+		if exprCtx.FunctionCall() != nil {
+			funcCallCtx := exprCtx.FunctionCall().(*parser.FunctionCallContext)
+			funcName := funcCallCtx.IDENTIFIER().GetText()
+			
+			// If it's a resource type, process it as a resource
+			if w.isResourceType(funcName) {
+				args := w.extractArguments(funcCallCtx.ArgumentList())
+				
+				if len(args) >= 2 {
+					resourceName := w.extractStringValue(args[0])
+					resourceConfig := args[1]
+					
+					// Create resource
+					resource := &ast.Resource{
+						Name:       resourceName,
+						Type:       funcName,
+						Properties: w.convertToMap(resourceConfig),
+						DependsOn:  []string{},
+					}
+					
+					w.compiler.resources[resourceName] = resource
+					fmt.Printf("Created resource: %s (%s)\n", resourceName, funcName)
+					
+					// Store variable reference to the resource
+					if w.variables == nil {
+						w.variables = make(map[string]interface{})
+					}
+					w.variables[varName] = resourceName
+					
+					variable := &ast.Variable{
+						Name:  varName,
+						Value: resourceName,
+					}
+					w.compiler.variables[varName] = variable
+					
+					fmt.Printf("Declared variable: %s\n", varName)
+					return
+				}
+			}
+		}
+	}
+	
+	// Regular variable declaration
 	value := w.evaluateExpression(ctx.Expression())
 	
 	if w.variables == nil {
@@ -63,8 +117,139 @@ func (w *ASTWalker) EnterVariableDeclaration(ctx *parser.VariableDeclarationCont
 	fmt.Printf("Declared variable: %s\n", varName)
 }
 
+// EnterForLoop handles for loops
+func (w *ASTWalker) EnterForLoop(ctx *parser.ForLoopContext) {
+	// Skip if already processed (prevents double processing)
+	if w.processedContexts != nil && w.processedContexts[ctx] {
+		return
+	}
+	
+	// Mark this loop and all its children as processed
+	if w.processedContexts == nil {
+		w.processedContexts = make(map[interface{}]bool)
+	}
+	w.processedContexts[ctx] = true
+	
+	// Mark all child statements as processed to prevent tree walker from processing them
+	for _, stmt := range ctx.AllStatement() {
+		w.markStatementAsProcessed(stmt)
+	}
+	
+	iterator := ctx.IDENTIFIER().GetText()
+	collectionExpr := ctx.Expression()
+	
+	fmt.Printf("Processing for loop: %s in collection\n", iterator)
+	
+	// Get collection name (assuming it's an identifier for now)
+	var collectionName string
+	if collectionExpr.IDENTIFIER() != nil {
+		collectionName = collectionExpr.IDENTIFIER().GetText()
+	}
+	
+	// Look up the collection in variables
+	var items []interface{}
+	if w.compiler.variables != nil {
+		if val, exists := w.compiler.variables[collectionName]; exists {
+			if arr, ok := val.Value.([]interface{}); ok {
+				items = arr
+				fmt.Printf("  Found collection '%s' with %d items\n", collectionName, len(items))
+			} else {
+				fmt.Printf("  Collection '%s' is not an array: %T\n", collectionName, val.Value)
+			}
+		} else {
+			fmt.Printf("  Collection '%s' not found in variables\n", collectionName)
+		}
+	} else {
+		fmt.Printf("  No variables available\n")
+	}
+	
+	// Save current variables state
+	savedVars := w.variables
+	
+	// Execute loop body for each item
+	statements := ctx.AllStatement()
+	
+	for _, item := range items {
+		// Create new scope with iterator variable
+		if w.variables == nil {
+			w.variables = make(map[string]interface{})
+		} else {
+			// Copy parent scope
+			newVars := make(map[string]interface{})
+			for k, v := range savedVars {
+				newVars[k] = v
+			}
+			w.variables = newVars
+		}
+		
+		// Set iterator variable in current scope
+		w.variables[iterator] = item
+		
+		// Execute each statement in the loop body
+		w.inManualExecution = true
+		for _, stmt := range statements {
+			w.executeStatement(stmt)
+		}
+		w.inManualExecution = false
+	}
+	
+	// Restore variables
+	w.variables = savedVars
+}
+
+// markStatementAsProcessed marks a statement and all its children as processed
+func (w *ASTWalker) markStatementAsProcessed(stmt parser.IStatementContext) {
+	stmtCtx := stmt.(*parser.StatementContext)
+	
+	if stmtCtx.VariableDeclaration() != nil {
+		varDecl := stmtCtx.VariableDeclaration().(*parser.VariableDeclarationContext)
+		w.processedContexts[varDecl] = true
+		
+		// Also mark any function calls within the variable declaration
+		expr := varDecl.Expression()
+		if exprCtx, ok := expr.(*parser.ExpressionContext); ok {
+			if exprCtx.FunctionCall() != nil {
+				w.processedContexts[exprCtx.FunctionCall()] = true
+			}
+		}
+	} else if stmtCtx.FunctionCall() != nil {
+		w.processedContexts[stmtCtx.FunctionCall()] = true
+	} else if stmtCtx.BlockDeclaration() != nil {
+		w.processedContexts[stmtCtx.BlockDeclaration()] = true
+	} else if stmtCtx.ForLoop() != nil {
+		w.processedContexts[stmtCtx.ForLoop()] = true
+	}
+}
+
+// executeStatement processes a single statement
+func (w *ASTWalker) executeStatement(stmt parser.IStatementContext) {
+	stmtCtx := stmt.(*parser.StatementContext)
+	
+	// DON'T mark as processed here - we want to allow multiple executions in loops
+	// Instead, we'll mark the loop itself as processed
+	
+	if stmtCtx.VariableDeclaration() != nil {
+		ctx := stmtCtx.VariableDeclaration().(*parser.VariableDeclarationContext)
+		w.EnterVariableDeclaration(ctx)
+	} else if stmtCtx.FunctionCall() != nil {
+		ctx := stmtCtx.FunctionCall().(*parser.FunctionCallContext)
+		w.EnterFunctionCall(ctx)
+	} else if stmtCtx.BlockDeclaration() != nil {
+		ctx := stmtCtx.BlockDeclaration().(*parser.BlockDeclarationContext)
+		w.EnterBlockDeclaration(ctx)
+	} else if stmtCtx.ForLoop() != nil {
+		ctx := stmtCtx.ForLoop().(*parser.ForLoopContext)
+		w.EnterForLoop(ctx)
+	}
+}
+
 // EnterFunctionCall handles function calls (resource declarations)
 func (w *ASTWalker) EnterFunctionCall(ctx *parser.FunctionCallContext) {
+	// Skip if already processed (but not if we're in manual execution mode)
+	if !w.inManualExecution && w.processedContexts != nil && w.processedContexts[ctx] {
+		return
+	}
+	
 	funcName := ctx.IDENTIFIER().GetText()
 	
 	// Check if this is a resource function call
@@ -108,7 +293,8 @@ func (w *ASTWalker) extractArguments(argList parser.IArgumentListContext) []inte
 	
 	var args []interface{}
 	for _, expr := range argList.(*parser.ArgumentListContext).AllExpression() {
-		args = append(args, w.evaluateExpression(expr))
+		val := w.evaluateExpression(expr)
+		args = append(args, val)
 	}
 	return args
 }
@@ -120,6 +306,20 @@ func (w *ASTWalker) evaluateExpression(expr parser.IExpressionContext) interface
 	
 	switch e := expr.(type) {
 	case *parser.ExpressionContext:
+		// Handle property access: object.property
+		if e.DOT() != nil && e.Expression() != nil && e.IDENTIFIER() != nil {
+			obj := w.evaluateExpression(e.Expression())
+			propName := e.IDENTIFIER().GetText()
+			
+			// If obj is a map, get the property
+			if objMap, ok := obj.(map[string]interface{}); ok {
+				if val, exists := objMap[propName]; exists {
+					return val
+				}
+			}
+			return nil
+		}
+		
 		if e.STRING_LITERAL() != nil {
 			return strings.Trim(e.STRING_LITERAL().GetText(), `"'`)
 		}
@@ -149,6 +349,10 @@ func (w *ASTWalker) evaluateExpression(expr parser.IExpressionContext) interface
 		}
 		if e.FunctionCall() != nil {
 			return w.evaluateFunctionCall(e.FunctionCall())
+		}
+		// Handle parenthesized expressions
+		if e.LPAREN() != nil && e.Expression() != nil {
+			return w.evaluateExpression(e.Expression())
 		}
 	}
 	

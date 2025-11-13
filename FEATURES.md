@@ -12,6 +12,8 @@
 - **Resource References**: Automatic dependency resolution
 - **Type Safety**: Strong typing for resource attributes
 - **Comments**: Single-line (`//`) and multi-line (`/* */`)
+- **For Loops**: Iterate over collections to create multiple resources
+- **Arrays & Objects**: First-class support for complex data structures
 
 ### State Management
 - **Local State**: `.tbstate` files track infrastructure

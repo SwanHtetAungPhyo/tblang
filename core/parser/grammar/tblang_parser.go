@@ -1,7 +1,6 @@
-// Code generated from tblang.g4 by ANTLR 4.13.1. DO NOT EDIT.
+// Code generated from grammar/tblang.g4 by ANTLR 4.13.1. DO NOT EDIT.
 
 package parser // tblang
-
 import (
 	"fmt"
 	"strconv"
@@ -300,6 +299,16 @@ func (s *ProgramContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *ProgramContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitProgram(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *tblangParser) Program() (localctx IProgramContext) {
 	localctx = NewProgramContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 0, tblangParserRULE_program)
@@ -483,6 +492,16 @@ func (s *StatementContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *StatementContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(tblangListener); ok {
 		listenerT.ExitStatement(s)
+	}
+}
+
+func (s *StatementContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitStatement(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -680,6 +699,16 @@ func (s *BlockDeclarationContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *BlockDeclarationContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitBlockDeclaration(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *tblangParser) BlockDeclaration() (localctx IBlockDeclarationContext) {
 	localctx = NewBlockDeclarationContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 4, tblangParserRULE_blockDeclaration)
@@ -851,6 +880,16 @@ func (s *VariableDeclarationContext) EnterRule(listener antlr.ParseTreeListener)
 func (s *VariableDeclarationContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(tblangListener); ok {
 		listenerT.ExitVariableDeclaration(s)
+	}
+}
+
+func (s *VariableDeclarationContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitVariableDeclaration(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1066,6 +1105,16 @@ func (s *ForLoopContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *ForLoopContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitForLoop(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *tblangParser) ForLoop() (localctx IForLoopContext) {
 	localctx = NewForLoopContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 8, tblangParserRULE_forLoop)
@@ -1247,6 +1296,16 @@ func (s *PropertyContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *PropertyContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitProperty(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *tblangParser) Property() (localctx IPropertyContext) {
 	localctx = NewPropertyContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 10, tblangParserRULE_property)
@@ -1404,6 +1463,16 @@ func (s *FunctionCallContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *FunctionCallContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(tblangListener); ok {
 		listenerT.ExitFunctionCall(s)
+	}
+}
+
+func (s *FunctionCallContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitFunctionCall(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1596,6 +1665,16 @@ func (s *ArgumentListContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ArgumentListContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(tblangListener); ok {
 		listenerT.ExitArgumentList(s)
+	}
+}
+
+func (s *ArgumentListContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitArgumentList(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1816,6 +1895,16 @@ func (s *ExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(tblangListener); ok {
 		listenerT.ExitExpression(s)
+	}
+}
+
+func (s *ExpressionContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitExpression(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -2109,6 +2198,16 @@ func (s *ObjectLiteralContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *ObjectLiteralContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitObjectLiteral(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *tblangParser) ObjectLiteral() (localctx IObjectLiteralContext) {
 	localctx = NewObjectLiteralContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 18, tblangParserRULE_objectLiteral)
@@ -2264,6 +2363,16 @@ func (s *ObjectPropertyContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ObjectPropertyContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(tblangListener); ok {
 		listenerT.ExitObjectProperty(s)
+	}
+}
+
+func (s *ObjectPropertyContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitObjectProperty(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -2453,6 +2562,16 @@ func (s *ArrayLiteralContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ArrayLiteralContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(tblangListener); ok {
 		listenerT.ExitArrayLiteral(s)
+	}
+}
+
+func (s *ArrayLiteralContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case tblangVisitor:
+		return t.VisitArrayLiteral(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 

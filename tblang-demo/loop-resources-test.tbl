@@ -1,0 +1,20 @@
+// Test loop with unique resource names
+
+cloud_vendor "aws" {
+    region = "us-east-1"
+    profile = "kyaw-zin"
+}
+
+// Create multiple subnets using a loop
+declare subnet_configs = [
+    { name: "public-subnet-1", cidr: "10.0.1.0/24" },
+    { name: "public-subnet-2", cidr: "10.0.2.0/24" },
+    { name: "private-subnet-1", cidr: "10.0.10.0/24" },
+    { name: "private-subnet-2", cidr: "10.0.11.0/24" }
+];
+
+for config in subnet_configs {
+    declare sub = subnet(config.name, {
+        cidr_block: config.cidr
+    });
+}
