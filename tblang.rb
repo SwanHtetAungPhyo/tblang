@@ -1,26 +1,33 @@
 class Tblang < Formula
   desc "Plugin-based Infrastructure as Code language"
-  homepage "https://github.com/yourusername/tblang"
-  url "https://github.com/yourusername/tblang/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "REPLACE_WITH_ACTUAL_SHA256"
+  homepage "https://github.com/SwanHtetAungPhyo/tblang"
+  url "https://github.com/SwanHtetAungPhyo/tblang.git",
+      branch: "main"
   license "MIT"
   version "0.1.0"
+  head "https://github.com/SwanHtetAungPhyo/tblang.git", branch: "main"
 
   depends_on "go" => :build
 
   def install
-    cd "core" do
-      system "go", "build", "-ldflags", "-s -w", "-o", "tblang", "./cmd/tblang"
-      bin.install "tblang"
-    end
+    if (buildpath/"core").exist?
+      cd "core" do
+        system "go", "build", "-ldflags", "-s -w", "-o", "tblang", "./cmd/tblang"
+        bin.install "tblang"
+      end
 
-    cd "plugin/aws" do
-      system "go", "build", "-o", "tblang-provider-aws", "main.go"
-      (lib/"tblang/plugins").install "tblang-provider-aws"
-    end
+      cd "plugin/aws" do
+        system "go", "build", "-o", "tblang-provider-aws", "main.go"
+        (lib/"tblang/plugins").install "tblang-provider-aws"
+      end
 
-    (prefix/"examples").install Dir["tblang-demo/*.tbl"]
-    (prefix/"examples").install Dir["tblang-demo/*.md"]
+      if (buildpath/"tblang-demo").exist?
+        (prefix/"examples").install Dir["tblang-demo/*.tbl"]
+        (prefix/"examples").install Dir["tblang-demo/*.md"]
+      end
+    else
+      odie "Repository structure not found. Please check the installation."
+    end
   end
 
   def post_install
