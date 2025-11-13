@@ -1,0 +1,47 @@
+{
+  "name": "tblang",
+  "displayName": "TBLang",
+  "description": "TBLang language support for VS Code - Infrastructure as Code",
+  "version": "1.0.0",
+  "publisher": "tblang",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "tblang",
+    "infrastructure",
+    "iac",
+    "cloud",
+    "aws"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SwanHtetAungPhyo/tblang"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "tblang",
+        "aliases": ["TBLang", "tblang"],
+        "extensions": [".tbl"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "tblang",
+        "scopeName": "source.tblang",
+        "path": "./syntaxes/tblang.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "tblang",
+        "path": "./snippets/tblang.json"
+      }
+    ]
+  }
+}

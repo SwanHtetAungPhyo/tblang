@@ -1,0 +1,50 @@
+{
+  "Cloud Vendor": {
+    "prefix": "cloud",
+    "body": [
+      "cloud_vendor \"${1:aws}\" {",
+      "\tregion = \"${2:us-east-1}\"",
+      "\tprofile = \"${3:default}\"",
+      "}"
+    ],
+    "description": "Cloud vendor configuration"
+  },
+  "Declare Variable": {
+    "prefix": "declare",
+    "body": [
+      "declare ${1:variable_name} = ${2:value};"
+    ],
+    "description": "Variable declaration"
+  },
+  "VPC Resource": {
+    "prefix": "vpc",
+    "body": [
+      "declare ${1:vpc_name} = vpc(\"${2:vpc-name}\", {",
+      "\tcidr_block: \"${3:10.0.0.0/16}\"",
+      "\tenable_dns_hostnames: ${4:true}",
+      "\tenable_dns_support: ${5:true}",
+      "});"
+    ],
+    "description": "VPC resource"
+  },
+  "Subnet Resource": {
+    "prefix": "subnet",
+    "body": [
+      "declare ${1:subnet_name} = subnet(\"${2:subnet-name}\", {",
+      "\tvpc_id: ${3:vpc_reference}",
+      "\tcidr_block: \"${4:10.0.1.0/24}\"",
+      "\tavailability_zone: \"${5:us-east-1a}\"",
+      "});"
+    ],
+    "description": "Subnet resource"
+  },
+  "For Loop": {
+    "prefix": "for",
+    "body": [
+      "for ${1:item} in ${2:collection} {",
+      "\t${3:// statements}",
+      "}"
+    ],
+    "description": "For loop"
+  }
+}
