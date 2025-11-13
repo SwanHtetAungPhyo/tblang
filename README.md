@@ -16,7 +16,7 @@ tblang plugins list
 ```
 
 **Shell Completion:**
-Completions are automatically installed for Bash, Zsh, and Fish. See [COMPLETION_GUIDE.md](COMPLETION_GUIDE.md) for setup instructions.
+Completions are automatically installed for Bash, Zsh, and Fish. See [COMPLETION_GUIDE.md](docs/COMPLETION_GUIDE.md) for setup instructions.
 
 ## Features
 
@@ -43,7 +43,7 @@ brew install tblang
 ```bash
 git clone https://github.com/SwanHtetAungPhyo/tblang.git
 cd tblang
-./install-tblang.sh
+./scripts/install-tblang.sh
 ```
 
 #### Option 3: Manual Build
@@ -176,7 +176,7 @@ for config in subnets {
 }
 ```
 
-See [LOOP_GUIDE.md](LOOP_GUIDE.md) for detailed loop documentation.
+See [LOOP_GUIDE.md](docs/LOOP_GUIDE.md) for detailed loop documentation.
 
 ### Resource References
 
@@ -843,10 +843,30 @@ cd plugin/aws && go test ./...
 
 MIT License - see LICENSE file for details.
 
+## Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+- **[FEATURES.md](docs/FEATURES.md)** - Complete feature list and capabilities
+- **[LOOP_GUIDE.md](docs/LOOP_GUIDE.md)** - Loop syntax and examples
+- **[LOOP_IMPLEMENTATION_SUMMARY.md](docs/LOOP_IMPLEMENTATION_SUMMARY.md)** - Technical implementation details
+- **[COMPLETION_GUIDE.md](docs/COMPLETION_GUIDE.md)** - Shell completion setup
+- **[HOMEBREW_SETUP.md](docs/HOMEBREW_SETUP.md)** - Homebrew installation guide
+- **[MAINTAINER_GUIDE.md](docs/MAINTAINER_GUIDE.md)** - Guide for maintainers
+- **[RELEASE_GUIDE.md](docs/RELEASE_GUIDE.md)** - Release process documentation
+
+## Scripts
+
+Utility scripts are available in the `scripts/` folder:
+
+- **[install-tblang.sh](scripts/install-tblang.sh)** - Installation script
+- **[enable-completion.sh](scripts/enable-completion.sh)** - Enable shell completions
+- **[sync-homebrew.sh](scripts/sync-homebrew.sh)** - Sync releases with Homebrew
+
 ## Support
 
 - GitHub Issues: Report bugs and request features
-- Documentation: Check the wiki for detailed guides
+- Documentation: Check the `docs/` folder for detailed guides
 - Examples: See `tblang-demo/` for example projects
 
 ## Roadmap
