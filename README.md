@@ -2,6 +2,19 @@
 
 TBLang is a modern, plugin-based Infrastructure as Code (IaC) language designed for simplicity and extensibility. Built with a clean separation between the core language engine and cloud provider plugins, TBLang offers a powerful yet intuitive way to manage infrastructure.
 
+## Installation
+
+```bash
+brew tap swanhtetaungphyo/tblang
+brew install tblang
+```
+
+Verify installation:
+```bash
+tblang --version
+tblang plugins list
+```
+
 ## Features
 
 - 🚀 **Plugin Architecture**: Extensible provider system using gRPC
@@ -15,15 +28,29 @@ TBLang is a modern, plugin-based Infrastructure as Code (IaC) language designed 
 
 ### Installation
 
+#### Option 1: Homebrew (Recommended)
+
+```bash
+brew tap swanhtetaungphyo/tblang
+brew install tblang
+```
+
+#### Option 2: Installation Script
+
+```bash
+git clone https://github.com/SwanHtetAungPhyo/tblang.git
+cd tblang
+./install-tblang.sh
+```
+
+#### Option 3: Manual Build
+
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/tblang.git
+git clone https://github.com/SwanHtetAungPhyo/tblang.git
 cd tblang
 
-# Run installation script
-./install-tblang.sh
-
-# Or build manually
+# Build core
 cd core && go build -o tblang ./cmd/tblang
 sudo cp tblang /usr/local/bin/
 
