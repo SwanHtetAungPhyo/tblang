@@ -40,9 +40,24 @@ var (
 func New() *Engine {
 	workingDir, _ := os.Getwd()
 	
-	// Try global plugin directory first, then local
-	pluginDir := "/usr/local/lib/tblang/plugins"
-	if _, err := os.Stat(pluginDir); os.IsNotExist(err) {
+	// Try multiple plugin directories in order of preference
+	pluginDirs := []string{
+		"/usr/local/lib/tblang/plugins",                    // Manual install
+		"/opt/homebrew/opt/tblang/lib/tblang/plugins",      // Homebrew (Apple Silicon)
+		"/usr/local/opt/tblang/lib/tblang/plugins",         // Homebrew (Intel)
+		filepath.Join(workingDir, ".tblang", "plugins"),    // Local project
+	}
+	
+	var pluginDir string
+	for _, dir := range pluginDirs {
+		if _, err := os.Stat(dir); err == nil {
+			pluginDir = dir
+			break
+		}
+	}
+	
+	// Default to local if none found
+	if pluginDir == "" {
 		pluginDir = filepath.Join(workingDir, ".tblang", "plugins")
 	}
 	

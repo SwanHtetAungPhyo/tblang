@@ -26,7 +26,7 @@ var rootCmd = &cobra.Command{
 	Long: `TBLang is a domain-specific language for Infrastructure as Code.
 It provides a simple, readable syntax for managing cloud infrastructure
 with a plugin-based architecture supporting multiple cloud providers.`,
-	Version: "1.1.0",
+	Version: "1.1.1",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
