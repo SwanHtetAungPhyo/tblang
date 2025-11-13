@@ -15,6 +15,9 @@ tblang --version
 tblang plugins list
 ```
 
+**Shell Completion:**
+Completions are automatically installed for Bash, Zsh, and Fish. See [COMPLETION_GUIDE.md](COMPLETION_GUIDE.md) for setup instructions.
+
 ## Features
 
 - 🚀 **Plugin Architecture**: Extensible provider system using gRPC

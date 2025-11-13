@@ -25,6 +25,16 @@ class Tblang < Formula
         (prefix/"examples").install Dir["tblang-demo/*.tbl"]
         (prefix/"examples").install Dir["tblang-demo/*.md"]
       end
+
+      # Generate shell completions
+      output = Utils.safe_popen_read(bin/"tblang", "completion", "bash")
+      (bash_completion/"tblang").write output
+
+      output = Utils.safe_popen_read(bin/"tblang", "completion", "zsh")
+      (zsh_completion/"_tblang").write output
+
+      output = Utils.safe_popen_read(bin/"tblang", "completion", "fish")
+      (fish_completion/"tblang.fish").write output
     else
       odie "Repository structure not found. Please check the installation."
     end
@@ -43,6 +53,16 @@ class Tblang < Formula
 
       Example files are available at:
         #{prefix}/examples/
+
+      Shell completions have been installed to:
+        #{bash_completion}/tblang
+        #{zsh_completion}/_tblang
+        #{fish_completion}/tblang.fish
+
+      To enable completions, add to your shell config:
+        Bash: source #{bash_completion}/tblang
+        Zsh:  Add #{zsh_completion} to your fpath
+        Fish: Already enabled
 
       To get started:
         1. Configure your AWS credentials:
