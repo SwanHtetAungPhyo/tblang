@@ -1,0 +1,27 @@
+// Test loops with actual AWS resources
+
+cloud_vendor "aws" {
+    region = "us-east-1"
+    profile = "kyaw-zin"
+}
+
+// Create a VPC first
+declare main_vpc = vpc("loop-test-vpc", {
+    cidr_block: "10.0.0.0/16",
+    enable_dns_hostnames: true,
+    enable_dns_support: true
+});
+
+// Create multiple subnets using a loop
+declare subnet_configs = [
+    { name: "loop-subnet-1", cidr: "10.0.1.0/24", az: "us-east-1a" },
+    { name: "loop-subnet-2", cidr: "10.0.2.0/24", az: "us-east-1b" }
+];
+
+for config in subnet_configs {
+    declare sub = subnet(config.name, {
+        cidr_block: config.cidr,
+        vpc_id: "loop-test-vpc",
+        availability_zone: config.az
+    });
+}

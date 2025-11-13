@@ -70,10 +70,11 @@ func (w *ASTWalker) EnterVariableDeclaration(ctx *parser.VariableDeclarationCont
 					resourceConfig := args[1]
 					
 					// Create resource
+					props := w.convertToMap(resourceConfig)
 					resource := &ast.Resource{
 						Name:       resourceName,
 						Type:       funcName,
-						Properties: w.convertToMap(resourceConfig),
+						Properties: props,
 						DependsOn:  []string{},
 					}
 					

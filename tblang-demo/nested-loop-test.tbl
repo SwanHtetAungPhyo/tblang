@@ -1,0 +1,23 @@
+// Test nested loops
+
+cloud_vendor "aws" {
+    region = "us-east-1"
+    profile = "kyaw-zin"
+}
+
+// Create subnets in multiple availability zones
+declare azs = ["us-east-1a", "us-east-1b"];
+declare subnet_types = [
+    { type: "public", cidr_prefix: "10.0" },
+    { type: "private", cidr_prefix: "10.1" }
+];
+
+declare az_index = [0, 1];
+
+for az_idx in az_index {
+    for subnet_type in subnet_types {
+        declare subnet_name = subnet("test-subnet", {
+            cidr_block: "10.0.1.0/24"
+        });
+    }
+}
