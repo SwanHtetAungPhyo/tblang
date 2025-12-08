@@ -8,8 +8,12 @@
     { "include": "#numbers" },
     { "include": "#booleans" },
     { "include": "#operators" },
-    { "include": "#functions" },
+    { "include": "#builtin-functions" },
     { "include": "#resource-types" },
+    { "include": "#data-sources" },
+    { "include": "#cloud-vendor" },
+    { "include": "#functions" },
+    { "include": "#variables" },
     { "include": "#punctuation" }
   ],
   "repository": {
@@ -22,19 +26,30 @@
         {
           "name": "comment.block.tblang",
           "begin": "/\\*",
-          "end": "\\*/"
+          "end": "\\*/",
+          "captures": {
+            "0": { "name": "punctuation.definition.comment.tblang" }
+          }
         }
       ]
     },
     "keywords": {
       "patterns": [
         {
-          "name": "keyword.control.tblang",
-          "match": "\\b(for|in|if|else|while|break|continue|return)\\b"
+          "name": "keyword.control.loop.tblang",
+          "match": "\\b(for|in)\\b"
         },
         {
-          "name": "keyword.other.tblang",
-          "match": "\\b(declare|cloud_vendor)\\b"
+          "name": "keyword.control.conditional.tblang",
+          "match": "\\b(if|else|while|break|continue|return)\\b"
+        },
+        {
+          "name": "keyword.declaration.tblang",
+          "match": "\\b(declare)\\b"
+        },
+        {
+          "name": "keyword.other.cloud.tblang",
+          "match": "\\b(cloud_vendor)\\b"
         }
       ]
     },
@@ -48,6 +63,21 @@
             {
               "name": "constant.character.escape.tblang",
               "match": "\\\\."
+            },
+            {
+              "name": "variable.other.interpolation.tblang",
+              "match": "\\$\\{[^}]+\\}"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.tblang",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.tblang",
+              "match": "\\\\."
             }
           ]
         }
@@ -56,8 +86,12 @@
     "numbers": {
       "patterns": [
         {
-          "name": "constant.numeric.tblang",
-          "match": "\\b-?[0-9]+(\\.[0-9]+)?\\b"
+          "name": "constant.numeric.float.tblang",
+          "match": "\\b-?[0-9]+\\.[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.tblang",
+          "match": "\\b-?[0-9]+\\b"
         }
       ]
     },
@@ -66,6 +100,10 @@
         {
           "name": "constant.language.boolean.tblang",
           "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "constant.language.null.tblang",
+          "match": "\\b(null|nil)\\b"
         }
       ]
     },
@@ -74,6 +112,70 @@
         {
           "name": "keyword.operator.assignment.tblang",
           "match": "="
+        },
+        {
+          "name": "keyword.operator.comparison.tblang",
+          "match": "(==|!=|<=|>=|<|>)"
+        },
+        {
+          "name": "keyword.operator.logical.tblang",
+          "match": "(&&|\\|\\||!)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.tblang",
+          "match": "(\\+|-|\\*|/|%)"
+        }
+      ]
+    },
+    "builtin-functions": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.tblang",
+          "match": "\\b(print|output)\\s*(?=\\()"
+        }
+      ]
+    },
+    "resource-types": {
+      "patterns": [
+        {
+          "name": "support.type.resource.network.tblang",
+          "match": "\\b(vpc|subnet|internet_gateway|nat_gateway|route_table|eip)\\s*(?=\\()"
+        },
+        {
+          "name": "support.type.resource.compute.tblang",
+          "match": "\\b(ec2|instance|launch_template|auto_scaling_group)\\s*(?=\\()"
+        },
+        {
+          "name": "support.type.resource.security.tblang",
+          "match": "\\b(security_group|iam_role|iam_policy|iam_user)\\s*(?=\\()"
+        },
+        {
+          "name": "support.type.resource.storage.tblang",
+          "match": "\\b(s3_bucket|ebs_volume|efs_file_system)\\s*(?=\\()"
+        },
+        {
+          "name": "support.type.resource.database.tblang",
+          "match": "\\b(rds_instance|dynamodb_table|elasticache_cluster)\\s*(?=\\()"
+        },
+        {
+          "name": "support.type.resource.loadbalancer.tblang",
+          "match": "\\b(alb|nlb|target_group|listener)\\s*(?=\\()"
+        }
+      ]
+    },
+    "data-sources": {
+      "patterns": [
+        {
+          "name": "support.type.datasource.tblang",
+          "match": "\\b(data_ami|data_vpc|data_subnet|data_availability_zones|data_caller_identity|data_region|data_account)\\s*(?=\\()"
+        }
+      ]
+    },
+    "cloud-vendor": {
+      "patterns": [
+        {
+          "name": "entity.name.type.cloud.tblang",
+          "match": "(?<=cloud_vendor\\s+)\"(aws|azure|gcp|kubernetes)\""
         }
       ]
     },
@@ -85,23 +187,55 @@
         }
       ]
     },
-    "resource-types": {
+    "variables": {
       "patterns": [
         {
-          "name": "support.type.tblang",
-          "match": "\\b(vpc|subnet|security_group|ec2|instance)\\b"
+          "name": "variable.other.property.tblang",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*:)"
+        },
+        {
+          "name": "variable.other.tblang",
+          "match": "(?<=declare\\s+)([a-zA-Z_][a-zA-Z0-9_]*)"
         }
       ]
     },
     "punctuation": {
       "patterns": [
         {
-          "name": "punctuation.separator.tblang",
-          "match": "[,;:]"
+          "name": "punctuation.separator.comma.tblang",
+          "match": ","
         },
         {
-          "name": "punctuation.section.braces.tblang",
-          "match": "[{}]"
+          "name": "punctuation.terminator.tblang",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.colon.tblang",
+          "match": ":"
+        },
+        {
+          "name": "punctuation.section.braces.begin.tblang",
+          "match": "\\{"
+        },
+        {
+          "name": "punctuation.section.braces.end.tblang",
+          "match": "\\}"
+        },
+        {
+          "name": "punctuation.section.brackets.begin.tblang",
+          "match": "\\["
+        },
+        {
+          "name": "punctuation.section.brackets.end.tblang",
+          "match": "\\]"
+        },
+        {
+          "name": "punctuation.section.parens.begin.tblang",
+          "match": "\\("
+        },
+        {
+          "name": "punctuation.section.parens.end.tblang",
+          "match": "\\)"
         },
         {
           "name": "punctuation.accessor.tblang",

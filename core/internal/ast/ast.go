@@ -100,3 +100,18 @@ type IdentifierExpression struct {
 func (i *IdentifierExpression) Evaluate() interface{} {
 	return i.Name
 }
+
+// DataSource represents a data source query in the AST
+type DataSource struct {
+	Name       string
+	Type       string
+	Properties map[string]interface{}
+	Result     map[string]interface{}
+}
+
+// Output represents an output declaration
+type Output struct {
+	Name        string
+	Value       interface{}
+	Description string
+}

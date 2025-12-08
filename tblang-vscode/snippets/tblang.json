@@ -1,13 +1,13 @@
 {
-  "Cloud Vendor": {
-    "prefix": "cloud",
+  "Cloud Vendor AWS": {
+    "prefix": ["cloud", "cloud_vendor", "aws"],
     "body": [
-      "cloud_vendor \"${1:aws}\" {",
-      "\tregion = \"${2:us-east-1}\"",
-      "\tprofile = \"${3:default}\"",
+      "cloud_vendor \"aws\" {",
+      "\tregion = \"${1:us-east-1}\"",
+      "\tprofile = \"${2:default}\"",
       "}"
     ],
-    "description": "Cloud vendor configuration"
+    "description": "AWS cloud vendor configuration"
   },
   "Declare Variable": {
     "prefix": "declare",
@@ -16,27 +16,224 @@
     ],
     "description": "Variable declaration"
   },
+  "Declare Object": {
+    "prefix": ["declareobj", "object"],
+    "body": [
+      "declare ${1:config} = {",
+      "\t${2:key}: ${3:value}",
+      "};"
+    ],
+    "description": "Declare an object variable"
+  },
+  "Declare Array": {
+    "prefix": ["declarearr", "array"],
+    "body": [
+      "declare ${1:items} = [",
+      "\t${2:item1},",
+      "\t${3:item2}",
+      "];"
+    ],
+    "description": "Declare an array variable"
+  },
   "VPC Resource": {
     "prefix": "vpc",
     "body": [
-      "declare ${1:vpc_name} = vpc(\"${2:vpc-name}\", {",
+      "declare ${1:main_vpc} = vpc(\"${2:my-vpc}\", {",
       "\tcidr_block: \"${3:10.0.0.0/16}\"",
-      "\tenable_dns_hostnames: ${4:true}",
-      "\tenable_dns_support: ${5:true}",
+      "\tenable_dns_hostnames: true",
+      "\tenable_dns_support: true",
+      "\ttags: {",
+      "\t\tName: \"${2:my-vpc}\"",
+      "\t\tEnvironment: \"${4:production}\"",
+      "\t\tManagedBy: \"TBLang\"",
+      "\t}",
       "});"
     ],
-    "description": "VPC resource"
+    "description": "VPC resource with tags"
   },
   "Subnet Resource": {
     "prefix": "subnet",
     "body": [
-      "declare ${1:subnet_name} = subnet(\"${2:subnet-name}\", {",
-      "\tvpc_id: ${3:vpc_reference}",
+      "declare ${1:my_subnet} = subnet(\"${2:my-subnet}\", {",
+      "\tvpc_id: ${3:main_vpc}",
       "\tcidr_block: \"${4:10.0.1.0/24}\"",
       "\tavailability_zone: \"${5:us-east-1a}\"",
+      "\tmap_public_ip: ${6:true}",
+      "\ttags: {",
+      "\t\tName: \"${2:my-subnet}\"",
+      "\t\tType: \"${7:public}\"",
+      "\t}",
       "});"
     ],
     "description": "Subnet resource"
+  },
+  "Security Group": {
+    "prefix": ["sg", "security_group"],
+    "body": [
+      "declare ${1:my_sg} = security_group(\"${2:my-sg}\", {",
+      "\tvpc_id: ${3:main_vpc}",
+      "\tname: \"${2:my-sg}\"",
+      "\tdescription: \"${4:Security group description}\"",
+      "\tingress_rules: [",
+      "\t\t{",
+      "\t\t\tprotocol: \"tcp\"",
+      "\t\t\tfrom_port: ${5:22}",
+      "\t\t\tto_port: ${5:22}",
+      "\t\t\tcidr_blocks: [\"${6:0.0.0.0/0}\"]",
+      "\t\t\tdescription: \"${7:SSH access}\"",
+      "\t\t}",
+      "\t]",
+      "\tegress_rules: [",
+      "\t\t{",
+      "\t\t\tprotocol: \"-1\"",
+      "\t\t\tfrom_port: 0",
+      "\t\t\tto_port: 0",
+      "\t\t\tcidr_blocks: [\"0.0.0.0/0\"]",
+      "\t\t}",
+      "\t]",
+      "\ttags: {",
+      "\t\tName: \"${2:my-sg}\"",
+      "\t}",
+      "});"
+    ],
+    "description": "Security group with ingress and egress rules"
+  },
+  "EC2 Instance": {
+    "prefix": "ec2",
+    "body": [
+      "declare ${1:my_instance} = ec2(\"${2:my-instance}\", {",
+      "\tami: \"${3:ami-0123456789abcdef0}\"",
+      "\tinstance_type: \"${4:t2.micro}\"",
+      "\tsubnet_id: ${5:my_subnet}",
+      "\tsecurity_groups: [${6:my_sg}]",
+      "\tassociate_public_ip: ${7:true}",
+      "\troot_volume_size: ${8:20}",
+      "\troot_volume_type: \"${9:gp3}\"",
+      "\ttags: {",
+      "\t\tName: \"${2:my-instance}\"",
+      "\t\tEnvironment: \"${10:production}\"",
+      "\t}",
+      "});"
+    ],
+    "description": "EC2 instance resource"
+  },
+  "EC2 with User Data": {
+    "prefix": "ec2userdata",
+    "body": [
+      "declare ${1:my_instance} = ec2(\"${2:my-instance}\", {",
+      "\tami: \"${3:ami-0123456789abcdef0}\"",
+      "\tinstance_type: \"${4:t2.micro}\"",
+      "\tsubnet_id: ${5:my_subnet}",
+      "\tsecurity_groups: [${6:my_sg}]",
+      "\tkey_name: \"${7:my-key-pair}\"",
+      "\tassociate_public_ip: true",
+      "\tuser_data: \"#!/bin/bash\\n${8:echo 'Hello World'}\"",
+      "\ttags: {",
+      "\t\tName: \"${2:my-instance}\"",
+      "\t}",
+      "});"
+    ],
+    "description": "EC2 instance with user data script"
+  },
+  "Internet Gateway": {
+    "prefix": ["igw", "internet_gateway"],
+    "body": [
+      "declare ${1:my_igw} = internet_gateway(\"${2:my-igw}\", {",
+      "\tvpc_id: ${3:main_vpc}",
+      "\ttags: {",
+      "\t\tName: \"${2:my-igw}\"",
+      "\t}",
+      "});"
+    ],
+    "description": "Internet Gateway resource"
+  },
+  "NAT Gateway": {
+    "prefix": ["nat", "nat_gateway"],
+    "body": [
+      "declare ${1:my_nat} = nat_gateway(\"${2:my-nat}\", {",
+      "\tsubnet_id: ${3:public_subnet}",
+      "\tallocation_id: ${4:my_eip}",
+      "\ttags: {",
+      "\t\tName: \"${2:my-nat}\"",
+      "\t}",
+      "});"
+    ],
+    "description": "NAT Gateway resource"
+  },
+  "Elastic IP": {
+    "prefix": "eip",
+    "body": [
+      "declare ${1:my_eip} = eip(\"${2:my-eip}\", {",
+      "\tdomain: \"vpc\"",
+      "\ttags: {",
+      "\t\tName: \"${2:my-eip}\"",
+      "\t}",
+      "});"
+    ],
+    "description": "Elastic IP resource"
+  },
+  "Route Table": {
+    "prefix": ["rt", "route_table"],
+    "body": [
+      "declare ${1:my_rt} = route_table(\"${2:my-rt}\", {",
+      "\tvpc_id: ${3:main_vpc}",
+      "\troutes: [",
+      "\t\t{",
+      "\t\t\tdestination_cidr: \"0.0.0.0/0\"",
+      "\t\t\tgateway_id: ${4:my_igw}",
+      "\t\t}",
+      "\t]",
+      "\ttags: {",
+      "\t\tName: \"${2:my-rt}\"",
+      "\t}",
+      "});"
+    ],
+    "description": "Route Table resource"
+  },
+  "Data Source AMI": {
+    "prefix": ["dataami", "data_ami"],
+    "body": [
+      "declare ${1:my_ami} = data_ami(\"${2:amazon-linux-2}\", {",
+      "\towners: [\"${3:amazon}\"]",
+      "\tfilters: [",
+      "\t\t{",
+      "\t\t\tname: \"name\"",
+      "\t\t\tvalues: [\"${4:amzn2-ami-hvm-*-x86_64-gp2}\"]",
+      "\t\t},",
+      "\t\t{",
+      "\t\t\tname: \"state\"",
+      "\t\t\tvalues: [\"available\"]",
+      "\t\t}",
+      "\t]",
+      "\tmost_recent: true",
+      "});"
+    ],
+    "description": "Data source to find AMI"
+  },
+  "Data Source VPC": {
+    "prefix": ["datavpc", "data_vpc"],
+    "body": [
+      "declare ${1:default_vpc} = data_vpc(\"${2:default}\", {",
+      "\tdefault: ${3:true}",
+      "});"
+    ],
+    "description": "Data source to query VPC"
+  },
+  "Data Source Availability Zones": {
+    "prefix": ["dataaz", "data_availability_zones"],
+    "body": [
+      "declare ${1:azs} = data_availability_zones(\"${2:available}\", {",
+      "\tstate: \"available\"",
+      "});"
+    ],
+    "description": "Data source to list availability zones"
+  },
+  "Data Source Caller Identity": {
+    "prefix": ["datacaller", "data_caller_identity"],
+    "body": [
+      "declare ${1:identity} = data_caller_identity(\"${2:current}\", {});"
+    ],
+    "description": "Data source to get AWS caller identity"
   },
   "For Loop": {
     "prefix": "for",
@@ -46,5 +243,107 @@
       "}"
     ],
     "description": "For loop"
+  },
+  "For Loop with Resource": {
+    "prefix": "forresource",
+    "body": [
+      "for ${1:config} in ${2:configs} {",
+      "\tdeclare ${3:resource} = ${4:subnet}(${1:config}.name, {",
+      "\t\t${5:vpc_id}: ${6:main_vpc}",
+      "\t\t${7:cidr_block}: ${1:config}.cidr",
+      "\t\ttags: {",
+      "\t\t\tName: ${1:config}.name",
+      "\t\t}",
+      "\t});",
+      "}"
+    ],
+    "description": "For loop creating resources"
+  },
+  "Print": {
+    "prefix": "print",
+    "body": [
+      "print(${1:\"message\"}, ${2:variable});"
+    ],
+    "description": "Print debug output"
+  },
+  "Output": {
+    "prefix": "output",
+    "body": [
+      "output(\"${1:Label}\", ${2:value});"
+    ],
+    "description": "Output with label"
+  },
+  "Tags Block": {
+    "prefix": "tags",
+    "body": [
+      "tags: {",
+      "\tName: \"${1:resource-name}\"",
+      "\tEnvironment: \"${2:production}\"",
+      "\tManagedBy: \"TBLang\"",
+      "}"
+    ],
+    "description": "Common tags block"
+  },
+  "Ingress Rule": {
+    "prefix": "ingress",
+    "body": [
+      "{",
+      "\tprotocol: \"${1:tcp}\"",
+      "\tfrom_port: ${2:22}",
+      "\tto_port: ${3:22}",
+      "\tcidr_blocks: [\"${4:0.0.0.0/0}\"]",
+      "\tdescription: \"${5:SSH access}\"",
+      "}"
+    ],
+    "description": "Security group ingress rule"
+  },
+  "Egress Rule Allow All": {
+    "prefix": "egressall",
+    "body": [
+      "{",
+      "\tprotocol: \"-1\"",
+      "\tfrom_port: 0",
+      "\tto_port: 0",
+      "\tcidr_blocks: [\"0.0.0.0/0\"]",
+      "}"
+    ],
+    "description": "Security group egress rule allowing all traffic"
+  },
+  "Full VPC Stack": {
+    "prefix": "vpcstack",
+    "body": [
+      "// VPC",
+      "declare ${1:main_vpc} = vpc(\"${2:my-vpc}\", {",
+      "\tcidr_block: \"${3:10.0.0.0/16}\"",
+      "\tenable_dns_hostnames: true",
+      "\tenable_dns_support: true",
+      "\ttags: { Name: \"${2:my-vpc}\" }",
+      "});",
+      "",
+      "// Internet Gateway",
+      "declare ${4:igw} = internet_gateway(\"${2:my-vpc}-igw\", {",
+      "\tvpc_id: ${1:main_vpc}",
+      "\ttags: { Name: \"${2:my-vpc}-igw\" }",
+      "});",
+      "",
+      "// Public Subnet",
+      "declare ${5:public_subnet} = subnet(\"${2:my-vpc}-public\", {",
+      "\tvpc_id: ${1:main_vpc}",
+      "\tcidr_block: \"${6:10.0.1.0/24}\"",
+      "\tavailability_zone: \"${7:us-east-1a}\"",
+      "\tmap_public_ip: true",
+      "\ttags: { Name: \"${2:my-vpc}-public\", Type: \"public\" }",
+      "});",
+      "",
+      "// Private Subnet",
+      "declare ${8:private_subnet} = subnet(\"${2:my-vpc}-private\", {",
+      "\tvpc_id: ${1:main_vpc}",
+      "\tcidr_block: \"${9:10.0.10.0/24}\"",
+      "\tavailability_zone: \"${7:us-east-1a}\"",
+      "\tmap_public_ip: false",
+      "\ttags: { Name: \"${2:my-vpc}-private\", Type: \"private\" }",
+      "});"
+    ],
+    "description": "Complete VPC stack with public and private subnets"
   }
 }

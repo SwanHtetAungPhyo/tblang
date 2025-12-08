@@ -1,0 +1,72 @@
+// Simple EC2 Test - No Data Sources
+// Tests EC2 instance creation with basic networking
+
+cloud_vendor "aws" {
+    region = "us-east-1"
+    profile = "default"
+}
+
+// VPC Configuration
+declare main_vpc = vpc("simple-ec2-vpc", {
+    cidr_block: "10.0.0.0/16"
+    enable_dns_hostnames: true
+    enable_dns_support: true
+    tags: {
+        Name: "simple-ec2-vpc"
+        Environment: "test"
+        ManagedBy: "TBLang"
+    }
+});
+
+// Public Subnet
+declare public_subnet = subnet("simple-ec2-subnet", {
+    vpc_id: main_vpc
+    cidr_block: "10.0.1.0/24"
+    availability_zone: "us-east-1a"
+    map_public_ip: true
+    tags: {
+        Name: "simple-ec2-subnet"
+        Type: "public"
+    }
+});
+
+// Security Group
+declare web_sg = security_group("simple-ec2-sg", {
+    vpc_id: main_vpc
+    name: "simple-ec2-sg"
+    description: "Security group for EC2 test"
+    ingress_rules: [
+        {
+            protocol: "tcp"
+            from_port: 22
+            to_port: 22
+            cidr_blocks: ["0.0.0.0/0"]
+        }
+    ]
+    egress_rules: [
+        {
+            protocol: "-1"
+            from_port: 0
+            to_port: 0
+            cidr_blocks: ["0.0.0.0/0"]
+        }
+    ]
+    tags: {
+        Name: "simple-ec2-sg"
+    }
+});
+
+// EC2 Instance with valid Amazon Linux 2 AMI
+declare web_server = ec2("simple-ec2-instance", {
+    ami: "ami-0156001f0548e90b1"
+    instance_type: "t2.micro"
+    subnet_id: public_subnet
+    security_groups: [web_sg]
+    associate_public_ip: true
+    tags: {
+        Name: "simple-ec2-instance"
+        Environment: "test"
+    }
+});
+
+print("EC2 test infrastructure defined!");

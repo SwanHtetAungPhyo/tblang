@@ -3,16 +3,19 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
 // AWSClient wraps AWS SDK clients for the plugin
 type AWSClient struct {
 	EC2    *ec2.Client
+	STS    *sts.Client
 	Config aws.Config
 	Region string
 }
@@ -34,6 +37,7 @@ func NewAWSClient(region string) (*AWSClient, error) {
 
 	return &AWSClient{
 		EC2:    ec2.NewFromConfig(cfg),
+		STS:    sts.NewFromConfig(cfg),
 		Config: cfg,
 		Region: region,
 	}, nil
@@ -285,3 +289,621 @@ func (c *AWSClient) buildTags(resourceName string, additionalTags map[string]str
 
 	return tags
 }
+
+// EC2 Instance types and methods
+
+type EC2InstanceConfig struct {
+	AMI               string
+	InstanceType      string
+	SubnetID          string
+	SecurityGroups    []string
+	KeyName           string
+	UserData          string
+	AssociatePublicIP bool
+	RootVolumeSize    int32
+	RootVolumeType    string
+	Tags              map[string]string
+}
+
+type EC2InstanceResult struct {
+	InstanceID string
+	PublicIP   string
+	PrivateIP  string
+	State      string
+}
+
+// CreateEC2Instance creates an EC2 instance
+func (c *AWSClient) CreateEC2Instance(ctx context.Context, config *EC2InstanceConfig) (*EC2InstanceResult, error) {
+	input := &ec2.RunInstancesInput{
+		ImageId:      aws.String(config.AMI),
+		InstanceType: types.InstanceType(config.InstanceType),
+		MinCount:     aws.Int32(1),
+		MaxCount:     aws.Int32(1),
+		SubnetId:     aws.String(config.SubnetID),
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeInstance,
+				Tags:         c.buildTags("ec2", config.Tags),
+			},
+		},
+	}
+
+	// Add security groups if specified
+	if len(config.SecurityGroups) > 0 {
+		input.SecurityGroupIds = config.SecurityGroups
+	}
+
+	// Add key name if specified
+	if config.KeyName != "" {
+		input.KeyName = aws.String(config.KeyName)
+	}
+
+	// Add user data if specified
+	if config.UserData != "" {
+		input.UserData = aws.String(config.UserData)
+	}
+
+	// Configure network interface for public IP
+	if config.AssociatePublicIP {
+		input.NetworkInterfaces = []types.InstanceNetworkInterfaceSpecification{
+			{
+				DeviceIndex:              aws.Int32(0),
+				SubnetId:                 aws.String(config.SubnetID),
+				AssociatePublicIpAddress: aws.Bool(true),
+				Groups:                   config.SecurityGroups,
+			},
+		}
+		// Clear these as they're now in network interface
+		input.SubnetId = nil
+		input.SecurityGroupIds = nil
+	}
+
+	// Configure root volume
+	if config.RootVolumeSize > 0 {
+		input.BlockDeviceMappings = []types.BlockDeviceMapping{
+			{
+				DeviceName: aws.String("/dev/xvda"),
+				Ebs: &types.EbsBlockDevice{
+					VolumeSize:          aws.Int32(config.RootVolumeSize),
+					VolumeType:          types.VolumeType(config.RootVolumeType),
+					DeleteOnTermination: aws.Bool(true),
+				},
+			},
+		}
+	}
+
+	result, err := c.EC2.RunInstances(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create EC2 instance: %w", err)
+	}
+
+	if len(result.Instances) == 0 {
+		return nil, fmt.Errorf("no instances created")
+	}
+
+	instance := result.Instances[0]
+	
+	// Wait for instance to be running to get IP addresses
+	waiter := ec2.NewInstanceRunningWaiter(c.EC2)
+	err = waiter.Wait(ctx, &ec2.DescribeInstancesInput{
+		InstanceIds: []string{*instance.InstanceId},
+	}, 5*60) // 5 minute timeout
+	
+	if err != nil {
+		fmt.Printf("Warning: instance may not be fully running: %v\n", err)
+	}
+
+	// Describe instance to get updated info
+	descResult, err := c.EC2.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
+		InstanceIds: []string{*instance.InstanceId},
+	})
+	
+	var publicIP, privateIP, state string
+	if err == nil && len(descResult.Reservations) > 0 && len(descResult.Reservations[0].Instances) > 0 {
+		inst := descResult.Reservations[0].Instances[0]
+		if inst.PublicIpAddress != nil {
+			publicIP = *inst.PublicIpAddress
+		}
+		if inst.PrivateIpAddress != nil {
+			privateIP = *inst.PrivateIpAddress
+		}
+		state = string(inst.State.Name)
+	}
+
+	return &EC2InstanceResult{
+		InstanceID: *instance.InstanceId,
+		PublicIP:   publicIP,
+		PrivateIP:  privateIP,
+		State:      state,
+	}, nil
+}
+
+// TerminateEC2Instance terminates an EC2 instance and waits for full termination
+func (c *AWSClient) TerminateEC2Instance(ctx context.Context, instanceID string) error {
+	_, err := c.EC2.TerminateInstances(ctx, &ec2.TerminateInstancesInput{
+		InstanceIds: []string{instanceID},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to terminate instance %s: %w", instanceID, err)
+	}
+
+	fmt.Printf("  Waiting for instance %s to terminate...\n", instanceID)
+
+	// Wait for termination with proper timeout (5 minutes)
+	waiter := ec2.NewInstanceTerminatedWaiter(c.EC2)
+	err = waiter.Wait(ctx, &ec2.DescribeInstancesInput{
+		InstanceIds: []string{instanceID},
+	}, 5*time.Minute)
+	
+	if err != nil {
+		// If waiter fails, poll manually
+		fmt.Printf("  Waiter timeout, polling for termination status...\n")
+		for i := 0; i < 30; i++ { // Try for up to 60 more seconds
+			time.Sleep(2 * time.Second)
+			result, descErr := c.EC2.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
+				InstanceIds: []string{instanceID},
+			})
+			if descErr != nil {
+				continue
+			}
+			if len(result.Reservations) > 0 && len(result.Reservations[0].Instances) > 0 {
+				state := result.Reservations[0].Instances[0].State.Name
+				if state == types.InstanceStateNameTerminated {
+					fmt.Printf("  Instance %s terminated successfully\n", instanceID)
+					return nil
+				}
+				fmt.Printf("  Instance state: %s\n", state)
+			}
+		}
+		return fmt.Errorf("timeout waiting for instance %s to terminate", instanceID)
+	}
+
+	fmt.Printf("  Instance %s terminated successfully\n", instanceID)
+	return nil
+}
+
+// Internet Gateway types and methods
+
+type InternetGatewayResult struct {
+	GatewayID string
+}
+
+// CreateInternetGateway creates an internet gateway and attaches it to a VPC
+func (c *AWSClient) CreateInternetGateway(ctx context.Context, vpcID string, tags map[string]string) (*InternetGatewayResult, error) {
+	input := &ec2.CreateInternetGatewayInput{
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeInternetGateway,
+				Tags:         c.buildTags("igw", tags),
+			},
+		},
+	}
+
+	result, err := c.EC2.CreateInternetGateway(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create internet gateway: %w", err)
+	}
+
+	gatewayID := *result.InternetGateway.InternetGatewayId
+
+	// Attach to VPC
+	_, err = c.EC2.AttachInternetGateway(ctx, &ec2.AttachInternetGatewayInput{
+		InternetGatewayId: aws.String(gatewayID),
+		VpcId:             aws.String(vpcID),
+	})
+	if err != nil {
+		// Try to delete the gateway if attach fails
+		c.EC2.DeleteInternetGateway(ctx, &ec2.DeleteInternetGatewayInput{
+			InternetGatewayId: aws.String(gatewayID),
+		})
+		return nil, fmt.Errorf("failed to attach internet gateway to VPC: %w", err)
+	}
+
+	return &InternetGatewayResult{
+		GatewayID: gatewayID,
+	}, nil
+}
+
+// DeleteInternetGateway detaches and deletes an internet gateway
+func (c *AWSClient) DeleteInternetGateway(ctx context.Context, gatewayID, vpcID string) error {
+	// Detach from VPC first
+	if vpcID != "" {
+		_, err := c.EC2.DetachInternetGateway(ctx, &ec2.DetachInternetGatewayInput{
+			InternetGatewayId: aws.String(gatewayID),
+			VpcId:             aws.String(vpcID),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to detach internet gateway: %w", err)
+		}
+	}
+
+	// Delete the gateway
+	_, err := c.EC2.DeleteInternetGateway(ctx, &ec2.DeleteInternetGatewayInput{
+		InternetGatewayId: aws.String(gatewayID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete internet gateway: %w", err)
+	}
+
+	return nil
+}
+
+// Route Table types and methods
+
+type RouteTableResult struct {
+	RouteTableID string
+}
+
+// CreateRouteTable creates a route table
+func (c *AWSClient) CreateRouteTable(ctx context.Context, vpcID string, tags map[string]string) (*RouteTableResult, error) {
+	input := &ec2.CreateRouteTableInput{
+		VpcId: aws.String(vpcID),
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeRouteTable,
+				Tags:         c.buildTags("rtb", tags),
+			},
+		},
+	}
+
+	result, err := c.EC2.CreateRouteTable(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create route table: %w", err)
+	}
+
+	return &RouteTableResult{
+		RouteTableID: *result.RouteTable.RouteTableId,
+	}, nil
+}
+
+// CreateRoute creates a route in a route table
+func (c *AWSClient) CreateRoute(ctx context.Context, routeTableID, destCIDR, gatewayID, natGatewayID string) error {
+	input := &ec2.CreateRouteInput{
+		RouteTableId:         aws.String(routeTableID),
+		DestinationCidrBlock: aws.String(destCIDR),
+	}
+
+	if gatewayID != "" {
+		input.GatewayId = aws.String(gatewayID)
+	}
+	if natGatewayID != "" {
+		input.NatGatewayId = aws.String(natGatewayID)
+	}
+
+	_, err := c.EC2.CreateRoute(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to create route: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteRouteTable deletes a route table
+func (c *AWSClient) DeleteRouteTable(ctx context.Context, routeTableID string) error {
+	_, err := c.EC2.DeleteRouteTable(ctx, &ec2.DeleteRouteTableInput{
+		RouteTableId: aws.String(routeTableID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete route table: %w", err)
+	}
+
+	return nil
+}
+
+// EIP types and methods
+
+type EIPResult struct {
+	AllocationID string
+	PublicIP     string
+}
+
+// AllocateEIP allocates an Elastic IP
+func (c *AWSClient) AllocateEIP(ctx context.Context, tags map[string]string) (*EIPResult, error) {
+	input := &ec2.AllocateAddressInput{
+		Domain: types.DomainTypeVpc,
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeElasticIp,
+				Tags:         c.buildTags("eip", tags),
+			},
+		},
+	}
+
+	result, err := c.EC2.AllocateAddress(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to allocate EIP: %w", err)
+	}
+
+	return &EIPResult{
+		AllocationID: *result.AllocationId,
+		PublicIP:     *result.PublicIp,
+	}, nil
+}
+
+// ReleaseEIP releases an Elastic IP
+func (c *AWSClient) ReleaseEIP(ctx context.Context, allocationID string) error {
+	_, err := c.EC2.ReleaseAddress(ctx, &ec2.ReleaseAddressInput{
+		AllocationId: aws.String(allocationID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to release EIP: %w", err)
+	}
+
+	return nil
+}
+
+// NAT Gateway types and methods
+
+type NATGatewayResult struct {
+	NATGatewayID string
+	State        string
+}
+
+// CreateNATGateway creates a NAT gateway
+func (c *AWSClient) CreateNATGateway(ctx context.Context, subnetID, allocationID string, tags map[string]string) (*NATGatewayResult, error) {
+	input := &ec2.CreateNatGatewayInput{
+		SubnetId:     aws.String(subnetID),
+		AllocationId: aws.String(allocationID),
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeNatgateway,
+				Tags:         c.buildTags("nat", tags),
+			},
+		},
+	}
+
+	result, err := c.EC2.CreateNatGateway(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create NAT gateway: %w", err)
+	}
+
+	natGatewayID := *result.NatGateway.NatGatewayId
+
+	// Wait for NAT gateway to be available
+	waiter := ec2.NewNatGatewayAvailableWaiter(c.EC2)
+	err = waiter.Wait(ctx, &ec2.DescribeNatGatewaysInput{
+		NatGatewayIds: []string{natGatewayID},
+	}, 10*60) // 10 minute timeout
+
+	if err != nil {
+		fmt.Printf("Warning: NAT gateway may not be fully available: %v\n", err)
+	}
+
+	return &NATGatewayResult{
+		NATGatewayID: natGatewayID,
+		State:        string(result.NatGateway.State),
+	}, nil
+}
+
+// DeleteNATGateway deletes a NAT gateway
+func (c *AWSClient) DeleteNATGateway(ctx context.Context, natGatewayID string) error {
+	_, err := c.EC2.DeleteNatGateway(ctx, &ec2.DeleteNatGatewayInput{
+		NatGatewayId: aws.String(natGatewayID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete NAT gateway: %w", err)
+	}
+
+	// Wait for deletion
+	waiter := ec2.NewNatGatewayDeletedWaiter(c.EC2)
+	err = waiter.Wait(ctx, &ec2.DescribeNatGatewaysInput{
+		NatGatewayIds: []string{natGatewayID},
+	}, 10*60)
+
+	if err != nil {
+		fmt.Printf("Warning: NAT gateway may not be fully deleted: %v\n", err)
+	}
+
+	return nil
+}
+
+// Data Source types and methods
+
+type AMIFilter struct {
+	Name   string
+	Values []string
+}
+
+type AMIResult struct {
+	AMIID        string
+	Name         string
+	Architecture string
+}
+
+// DescribeAMI finds an AMI based on filters
+func (c *AWSClient) DescribeAMI(ctx context.Context, owners []string, filters []AMIFilter, mostRecent bool) (*AMIResult, error) {
+	input := &ec2.DescribeImagesInput{
+		Owners: owners,
+	}
+
+	// Add filters
+	for _, f := range filters {
+		input.Filters = append(input.Filters, types.Filter{
+			Name:   aws.String(f.Name),
+			Values: f.Values,
+		})
+	}
+
+	result, err := c.EC2.DescribeImages(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to describe AMIs: %w", err)
+	}
+
+	if len(result.Images) == 0 {
+		return nil, fmt.Errorf("no AMIs found matching criteria")
+	}
+
+	// Sort by creation date if most_recent is true
+	images := result.Images
+	if mostRecent && len(images) > 1 {
+		// Simple sort - find the most recent
+		var mostRecentImage types.Image
+		var mostRecentDate string
+		for _, img := range images {
+			if img.CreationDate != nil && *img.CreationDate > mostRecentDate {
+				mostRecentDate = *img.CreationDate
+				mostRecentImage = img
+			}
+		}
+		if mostRecentImage.ImageId != nil {
+			images = []types.Image{mostRecentImage}
+		}
+	}
+
+	img := images[0]
+	var name, arch string
+	if img.Name != nil {
+		name = *img.Name
+	}
+	if img.Architecture != "" {
+		arch = string(img.Architecture)
+	}
+
+	return &AMIResult{
+		AMIID:        *img.ImageId,
+		Name:         name,
+		Architecture: arch,
+	}, nil
+}
+
+type VPCDataResult struct {
+	VpcID     string
+	CIDRBlock string
+	State     string
+}
+
+// DescribeVPC finds a VPC
+func (c *AWSClient) DescribeVPC(ctx context.Context, vpcID string, isDefault bool) (*VPCDataResult, error) {
+	input := &ec2.DescribeVpcsInput{}
+
+	if vpcID != "" {
+		input.VpcIds = []string{vpcID}
+	}
+
+	if isDefault {
+		input.Filters = []types.Filter{
+			{
+				Name:   aws.String("isDefault"),
+				Values: []string{"true"},
+			},
+		}
+	}
+
+	result, err := c.EC2.DescribeVpcs(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to describe VPCs: %w", err)
+	}
+
+	if len(result.Vpcs) == 0 {
+		return nil, fmt.Errorf("no VPCs found")
+	}
+
+	vpc := result.Vpcs[0]
+	return &VPCDataResult{
+		VpcID:     *vpc.VpcId,
+		CIDRBlock: *vpc.CidrBlock,
+		State:     string(vpc.State),
+	}, nil
+}
+
+type SubnetDataResult struct {
+	SubnetID         string
+	CIDRBlock        string
+	AvailabilityZone string
+}
+
+// DescribeSubnet finds a subnet
+func (c *AWSClient) DescribeSubnet(ctx context.Context, subnetID, vpcID string) (*SubnetDataResult, error) {
+	input := &ec2.DescribeSubnetsInput{}
+
+	if subnetID != "" {
+		input.SubnetIds = []string{subnetID}
+	}
+
+	if vpcID != "" {
+		input.Filters = []types.Filter{
+			{
+				Name:   aws.String("vpc-id"),
+				Values: []string{vpcID},
+			},
+		}
+	}
+
+	result, err := c.EC2.DescribeSubnets(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to describe subnets: %w", err)
+	}
+
+	if len(result.Subnets) == 0 {
+		return nil, fmt.Errorf("no subnets found")
+	}
+
+	subnet := result.Subnets[0]
+	return &SubnetDataResult{
+		SubnetID:         *subnet.SubnetId,
+		CIDRBlock:        *subnet.CidrBlock,
+		AvailabilityZone: *subnet.AvailabilityZone,
+	}, nil
+}
+
+type AvailabilityZonesResult struct {
+	Names   []string
+	ZoneIDs []string
+}
+
+// DescribeAvailabilityZones lists availability zones
+func (c *AWSClient) DescribeAvailabilityZones(ctx context.Context, state string) (*AvailabilityZonesResult, error) {
+	input := &ec2.DescribeAvailabilityZonesInput{}
+
+	if state != "" {
+		input.Filters = []types.Filter{
+			{
+				Name:   aws.String("state"),
+				Values: []string{state},
+			},
+		}
+	}
+
+	result, err := c.EC2.DescribeAvailabilityZones(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to describe availability zones: %w", err)
+	}
+
+	var names, zoneIDs []string
+	for _, az := range result.AvailabilityZones {
+		if az.ZoneName != nil {
+			names = append(names, *az.ZoneName)
+		}
+		if az.ZoneId != nil {
+			zoneIDs = append(zoneIDs, *az.ZoneId)
+		}
+	}
+
+	return &AvailabilityZonesResult{
+		Names:   names,
+		ZoneIDs: zoneIDs,
+	}, nil
+}
+
+type CallerIdentityResult struct {
+	AccountID string
+	ARN       string
+	UserID    string
+}
+
+// GetCallerIdentity gets the caller's AWS identity
+func (c *AWSClient) GetCallerIdentity(ctx context.Context) (*CallerIdentityResult, error) {
+	result, err := c.STS.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get caller identity: %w", err)
+	}
+
+	return &CallerIdentityResult{
+		AccountID: *result.Account,
+		ARN:       *result.Arn,
+		UserID:    *result.UserId,
+	}, nil
+}
+
+// Helper to suppress unused import warning
+var _ = time.Second

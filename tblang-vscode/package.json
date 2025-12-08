@@ -1,31 +1,42 @@
 {
   "name": "tblang",
   "displayName": "TBLang",
-  "description": "TBLang language support for VS Code - Infrastructure as Code",
-  "version": "1.0.0",
-  "publisher": "tblang",
+  "description": "TBLang language support for VS Code - Infrastructure as Code with AWS support",
+  "version": "1.1.0",
+  "publisher": "SwanHtetAungPhyo",
   "engines": {
     "vscode": "^1.75.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Snippets",
+    "Other"
   ],
   "keywords": [
     "tblang",
     "infrastructure",
     "iac",
     "cloud",
-    "aws"
+    "aws",
+    "vpc",
+    "ec2",
+    "terraform",
+    "devops",
+    "infrastructure-as-code"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/SwanHtetAungPhyo/tblang"
   },
+  "bugs": {
+    "url": "https://github.com/SwanHtetAungPhyo/tblang/issues"
+  },
+  "homepage": "https://github.com/SwanHtetAungPhyo/tblang#readme",
   "contributes": {
     "languages": [
       {
         "id": "tblang",
-        "aliases": ["TBLang", "tblang"],
+        "aliases": ["TBLang", "tblang", "TBL"],
         "extensions": [".tbl"],
         "configuration": "./language-configuration.json"
       }
@@ -42,6 +53,15 @@
         "language": "tblang",
         "path": "./snippets/tblang.json"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[tblang]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": false,
+        "editor.wordWrap": "off",
+        "editor.autoIndent": "full"
+      }
+    }
   }
 }

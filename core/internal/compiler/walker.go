@@ -253,6 +253,42 @@ func (w *ASTWalker) EnterFunctionCall(ctx *parser.FunctionCallContext) {
 	
 	funcName := ctx.IDENTIFIER().GetText()
 	
+	// Handle print function
+	if funcName == "print" {
+		args := w.extractArguments(ctx.ArgumentList())
+		w.handlePrint(args)
+		return
+	}
+	
+	// Handle output function (alias for print with formatting)
+	if funcName == "output" {
+		args := w.extractArguments(ctx.ArgumentList())
+		w.handleOutput(args)
+		return
+	}
+	
+	// Check if this is a data source function call
+	if w.isDataSourceType(funcName) {
+		args := w.extractArguments(ctx.ArgumentList())
+		
+		if len(args) >= 2 {
+			dataSourceName := w.extractStringValue(args[0])
+			dataSourceConfig := args[1]
+			
+			// Create data source (stored as a special resource type)
+			dataSource := &ast.Resource{
+				Name:       dataSourceName,
+				Type:       funcName,
+				Properties: w.convertToMap(dataSourceConfig),
+				DependsOn:  []string{},
+			}
+			
+			w.compiler.resources[dataSourceName] = dataSource
+			fmt.Printf("Created data source: %s (%s)\n", dataSourceName, funcName)
+		}
+		return
+	}
+	
 	// Check if this is a resource function call
 	if w.isResourceType(funcName) {
 		args := w.extractArguments(ctx.ArgumentList())
@@ -275,12 +311,91 @@ func (w *ASTWalker) EnterFunctionCall(ctx *parser.FunctionCallContext) {
 	}
 }
 
+// handlePrint handles the print() function for debugging output
+func (w *ASTWalker) handlePrint(args []interface{}) {
+	for i, arg := range args {
+		if i > 0 {
+			fmt.Print(" ")
+		}
+		w.printValue(arg)
+	}
+	fmt.Println()
+}
+
+// handleOutput handles the output() function with formatted output
+func (w *ASTWalker) handleOutput(args []interface{}) {
+	if len(args) == 0 {
+		return
+	}
+	
+	// First argument is the label/name
+	if len(args) >= 1 {
+		label := w.extractStringValue(args[0])
+		fmt.Printf("\033[1;36m[OUTPUT]\033[0m %s", label)
+		
+		if len(args) >= 2 {
+			fmt.Print(" = ")
+			w.printValue(args[1])
+		}
+		fmt.Println()
+	}
+}
+
+// printValue prints a value with proper formatting
+func (w *ASTWalker) printValue(value interface{}) {
+	switch v := value.(type) {
+	case string:
+		// Check if it's a variable reference
+		if w.variables != nil {
+			if resolved, exists := w.variables[v]; exists {
+				w.printValue(resolved)
+				return
+			}
+		}
+		fmt.Printf("\033[32m\"%s\"\033[0m", v)
+	case float64:
+		fmt.Printf("\033[33m%v\033[0m", v)
+	case bool:
+		fmt.Printf("\033[35m%v\033[0m", v)
+	case map[string]interface{}:
+		fmt.Print("{\n")
+		for key, val := range v {
+			fmt.Printf("  \033[34m%s\033[0m: ", key)
+			w.printValue(val)
+			fmt.Println(",")
+		}
+		fmt.Print("}")
+	case []interface{}:
+		fmt.Print("[")
+		for i, item := range v {
+			if i > 0 {
+				fmt.Print(", ")
+			}
+			w.printValue(item)
+		}
+		fmt.Print("]")
+	default:
+		fmt.Printf("%v", v)
+	}
+}
+
 // Helper methods
 
 func (w *ASTWalker) isResourceType(funcName string) bool {
-	resourceTypes := []string{"vpc", "subnet", "security_group", "ec2"}
+	resourceTypes := []string{"vpc", "subnet", "security_group", "ec2", "internet_gateway", "route_table", "eip", "nat_gateway"}
 	for _, rt := range resourceTypes {
 		if rt == funcName {
+			return true
+		}
+	}
+	return false
+}
+
+// isDataSourceType checks if a function is a data source type
+func (w *ASTWalker) isDataSourceType(funcName string) bool {
+	dataSourceTypes := []string{"data_ami", "data_vpc", "data_subnet", "data_availability_zones", "data_caller_identity"}
+	for _, dt := range dataSourceTypes {
+		if dt == funcName {
 			return true
 		}
 	}

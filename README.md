@@ -193,6 +193,59 @@ declare my_subnet = subnet("my-subnet", {
 
 TBLang automatically resolves references to actual resource IDs (e.g., `vpc-xxxxx`).
 
+### Print and Output Functions
+
+Debug and display values during execution:
+
+```tblang
+// Print values to console
+print("Hello, TBLang!");
+print("VPC ID:", my_vpc);
+print("Config:", vpc_config);
+
+// Output with labels (formatted output)
+output("VPC ID", my_vpc);
+output("Instance Details", web_server);
+```
+
+### Data Sources
+
+Query existing AWS resources (like Terraform data sources):
+
+```tblang
+// Find the latest Amazon Linux 2 AMI
+declare amazon_linux = data_ami("amazon-linux-2", {
+    owners: ["amazon"]
+    filters: [
+        {
+            name: "name"
+            values: ["amzn2-ami-hvm-*-x86_64-gp2"]
+        }
+    ]
+    most_recent: true
+});
+
+// Get the default VPC
+declare default_vpc = data_vpc("default", {
+    default: true
+});
+
+// Get available availability zones
+declare azs = data_availability_zones("available", {
+    state: "available"
+});
+
+// Get caller identity
+declare identity = data_caller_identity("current", {});
+```
+
+**Available Data Sources:**
+- `data_ami` - Find AMI images
+- `data_vpc` - Query VPC information
+- `data_subnet` - Query subnet information
+- `data_availability_zones` - List availability zones
+- `data_caller_identity` - Get current AWS identity
+
 ### Supported Resource Types
 
 #### VPC (Virtual Private Cloud)
@@ -290,6 +343,127 @@ declare my_sg = security_group("sg-name", {
 
 **Computed Attributes:**
 - `group_id`: AWS Security Group ID
+
+#### EC2 Instance
+
+```tblang
+declare web_server = ec2("web-server", {
+    ami: "ami-0c55b159cbfafe1f0"
+    instance_type: "t2.micro"
+    subnet_id: my_subnet
+    security_groups: [my_sg]
+    key_name: "my-key-pair"
+    associate_public_ip: true
+    root_volume_size: 20
+    root_volume_type: "gp3"
+    user_data: "#!/bin/bash\nyum update -y"
+    tags: {
+        Name: "web-server"
+        Environment: "production"
+    }
+});
+```
+
+**Attributes:**
+- `ami` (required): AMI ID
+- `instance_type` (required): Instance type (t2.micro, t3.medium, etc.)
+- `subnet_id` (required): Subnet reference or ID
+- `security_groups` (optional): List of security group references
+- `key_name` (optional): SSH key pair name
+- `associate_public_ip` (optional): Assign public IP
+- `root_volume_size` (optional): Root volume size in GB
+- `root_volume_type` (optional): Volume type (gp2, gp3, io1)
+- `user_data` (optional): User data script
+- `tags` (optional): Resource tags
+
+**Computed Attributes:**
+- `instance_id`: EC2 Instance ID
+- `public_ip`: Public IP address
+- `private_ip`: Private IP address
+- `state`: Instance state
+
+#### Internet Gateway
+
+```tblang
+declare igw = internet_gateway("main-igw", {
+    vpc_id: my_vpc
+    tags: {
+        Name: "main-igw"
+    }
+});
+```
+
+**Attributes:**
+- `vpc_id` (required): VPC to attach to
+- `tags` (optional): Resource tags
+
+**Computed Attributes:**
+- `gateway_id`: Internet Gateway ID
+
+#### NAT Gateway
+
+```tblang
+declare nat_gw = nat_gateway("main-nat", {
+    subnet_id: public_subnet
+    allocation_id: my_eip
+    tags: {
+        Name: "main-nat"
+    }
+});
+```
+
+**Attributes:**
+- `subnet_id` (required): Public subnet for NAT Gateway
+- `allocation_id` (required): Elastic IP allocation ID
+- `tags` (optional): Resource tags
+
+**Computed Attributes:**
+- `nat_gateway_id`: NAT Gateway ID
+- `state`: NAT Gateway state
+
+#### Elastic IP (EIP)
+
+```tblang
+declare my_eip = eip("nat-eip", {
+    domain: "vpc"
+    tags: {
+        Name: "nat-eip"
+    }
+});
+```
+
+**Attributes:**
+- `domain` (optional): Domain type (vpc)
+- `tags` (optional): Resource tags
+
+**Computed Attributes:**
+- `allocation_id`: Allocation ID
+- `public_ip`: Public IP address
+
+#### Route Table
+
+```tblang
+declare public_rt = route_table("public-rt", {
+    vpc_id: my_vpc
+    routes: [
+        {
+            destination_cidr: "0.0.0.0/0"
+            gateway_id: igw
+        }
+    ]
+    tags: {
+        Name: "public-rt"
+    }
+});
+```
+
+**Attributes:**
+- `vpc_id` (required): VPC ID
+- `routes` (optional): List of routes
+- `tags` (optional): Resource tags
+
+**Computed Attributes:**
+- `route_table_id`: Route Table ID
 
 ### Comments
 

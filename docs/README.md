@@ -7,6 +7,7 @@ This directory contains comprehensive documentation for TBLang.
 ### User Guides
 
 - **[FEATURES.md](FEATURES.md)** - Complete list of TBLang features and capabilities
+- **[NEW_FEATURES.md](NEW_FEATURES.md)** - New features: EC2, Data Sources, Print function
 - **[LOOP_GUIDE.md](LOOP_GUIDE.md)** - Detailed guide on using loops in TBLang
 - **[COMPLETION_GUIDE.md](COMPLETION_GUIDE.md)** - Shell completion setup instructions
 

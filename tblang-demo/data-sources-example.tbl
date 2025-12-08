@@ -1,0 +1,110 @@
+// TBLang Data Sources Example
+// Demonstrates how to use data sources to query existing AWS resources
+
+cloud_vendor "aws" {
+    region = "us-east-1"
+    profile = "default"
+}
+
+// ============================================
+// Data Sources - Query Existing Resources
+// ============================================
+
+// Get the default VPC
+declare default_vpc = data_vpc("default-vpc", {
+    default: true
+});
+
+print("Default VPC:", default_vpc);
+
+// Get available availability zones
+declare available_azs = data_availability_zones("available-zones", {
+    state: "available"
+});
+
+print("Available AZs:", available_azs);
+
+// Get caller identity (who am I?)
+declare caller = data_caller_identity("whoami", {});
+
+output("Current AWS Identity", caller);
+
+// Find the latest Amazon Linux 2 AMI
+declare amazon_linux = data_ami("amazon-linux-2-latest", {
+    owners: ["amazon"]
+    filters: [
+        {
+            name: "name"
+            values: ["amzn2-ami-hvm-*-x86_64-gp2"]
+        },
+        {
+            name: "virtualization-type"
+            values: ["hvm"]
+        },
+        {
+            name: "root-device-type"
+            values: ["ebs"]
+        }
+    ]
+    most_recent: true
+});
+
+print("Amazon Linux 2 AMI:", amazon_linux);
+
+// Find Ubuntu 22.04 LTS AMI
+declare ubuntu_ami = data_ami("ubuntu-22-04", {
+    owners: ["099720109477"]  // Canonical
+    filters: [
+        {
+            name: "name"
+            values: ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+        },
+        {
+            name: "state"
+            values: ["available"]
+        }
+    ]
+    most_recent: true
+});
+
+print("Ubuntu 22.04 AMI:", ubuntu_ami);
+
+// ============================================
+// Using Data Sources in Resources
+// ============================================
+
+// Create a VPC
+declare my_vpc = vpc("data-demo-vpc", {
+    cidr_block: "10.100.0.0/16"
+    enable_dns_hostnames: true
+    enable_dns_support: true
+    tags: {
+        Name: "data-demo-vpc"
+        Environment: "demo"
+    }
+});
+
+// Create subnets in each availability zone dynamically
+declare subnet_configs = [
+    { name: "subnet-az-1", cidr: "10.100.1.0/24", az_index: 0 },
+    { name: "subnet-az-2", cidr: "10.100.2.0/24", az_index: 1 },
+    { name: "subnet-az-3", cidr: "10.100.3.0/24", az_index: 2 }
+];
+
+for config in subnet_configs {
+    declare subnet = subnet(config.name, {
+        vpc_id: my_vpc
+        cidr_block: config.cidr
+        availability_zone: "us-east-1a"  // Would use azs[config.az_index] with full implementation
+        map_public_ip: true
+        tags: {
+            Name: config.name
+            Environment: "demo"
+        }
+    });
+    
+    print("Created subnet:", config.name);
+}
+
+// Final output
+output("Demo Complete", "All data sources queried and resources created");

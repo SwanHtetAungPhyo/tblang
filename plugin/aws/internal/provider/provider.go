@@ -185,6 +185,21 @@ func (p *AWSProvider) GetSchema(ctx context.Context, req *plugin.GetSchemaReques
 							Description: "User data script",
 							Optional:    true,
 						},
+						"associate_public_ip": {
+							Type:        "bool",
+							Description: "Associate public IP address",
+							Optional:    true,
+						},
+						"root_volume_size": {
+							Type:        "number",
+							Description: "Root volume size in GB",
+							Optional:    true,
+						},
+						"root_volume_type": {
+							Type:        "string",
+							Description: "Root volume type (gp2, gp3, io1, etc.)",
+							Optional:    true,
+						},
 						"tags": {
 							Type:        "map",
 							Description: "Resource tags",
@@ -203,6 +218,271 @@ func (p *AWSProvider) GetSchema(ctx context.Context, req *plugin.GetSchemaReques
 						"private_ip": {
 							Type:        "string",
 							Description: "Private IP address",
+							Computed:    true,
+						},
+						"state": {
+							Type:        "string",
+							Description: "Instance state",
+							Computed:    true,
+						},
+					},
+				},
+			},
+			"internet_gateway": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"vpc_id": {
+							Type:        "string",
+							Description: "VPC ID to attach the gateway to",
+							Required:    true,
+						},
+						"tags": {
+							Type:        "map",
+							Description: "Resource tags",
+							Optional:    true,
+						},
+						"gateway_id": {
+							Type:        "string",
+							Description: "Internet Gateway ID",
+							Computed:    true,
+						},
+					},
+				},
+			},
+			"route_table": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"vpc_id": {
+							Type:        "string",
+							Description: "VPC ID",
+							Required:    true,
+						},
+						"routes": {
+							Type:        "list",
+							Description: "List of routes",
+							Optional:    true,
+						},
+						"tags": {
+							Type:        "map",
+							Description: "Resource tags",
+							Optional:    true,
+						},
+						"route_table_id": {
+							Type:        "string",
+							Description: "Route Table ID",
+							Computed:    true,
+						},
+					},
+				},
+			},
+			"eip": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"domain": {
+							Type:        "string",
+							Description: "Domain (vpc or standard)",
+							Optional:    true,
+						},
+						"instance_id": {
+							Type:        "string",
+							Description: "Instance ID to associate with",
+							Optional:    true,
+						},
+						"tags": {
+							Type:        "map",
+							Description: "Resource tags",
+							Optional:    true,
+						},
+						"allocation_id": {
+							Type:        "string",
+							Description: "Allocation ID",
+							Computed:    true,
+						},
+						"public_ip": {
+							Type:        "string",
+							Description: "Public IP address",
+							Computed:    true,
+						},
+					},
+				},
+			},
+			"nat_gateway": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"subnet_id": {
+							Type:        "string",
+							Description: "Subnet ID",
+							Required:    true,
+						},
+						"allocation_id": {
+							Type:        "string",
+							Description: "EIP Allocation ID",
+							Required:    true,
+						},
+						"tags": {
+							Type:        "map",
+							Description: "Resource tags",
+							Optional:    true,
+						},
+						"nat_gateway_id": {
+							Type:        "string",
+							Description: "NAT Gateway ID",
+							Computed:    true,
+						},
+						"state": {
+							Type:        "string",
+							Description: "NAT Gateway state",
+							Computed:    true,
+						},
+					},
+				},
+			},
+		},
+		DataSourceSchemas: map[string]*plugin.Schema{
+			"data_ami": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"owners": {
+							Type:        "list",
+							Description: "List of AMI owners",
+							Required:    true,
+						},
+						"filters": {
+							Type:        "list",
+							Description: "Filters to apply",
+							Optional:    true,
+						},
+						"most_recent": {
+							Type:        "bool",
+							Description: "Return most recent AMI",
+							Optional:    true,
+						},
+						"ami_id": {
+							Type:        "string",
+							Description: "AMI ID",
+							Computed:    true,
+						},
+						"name": {
+							Type:        "string",
+							Description: "AMI name",
+							Computed:    true,
+						},
+						"architecture": {
+							Type:        "string",
+							Description: "AMI architecture",
+							Computed:    true,
+						},
+					},
+				},
+			},
+			"data_vpc": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"vpc_id": {
+							Type:        "string",
+							Description: "VPC ID to look up",
+							Optional:    true,
+						},
+						"filters": {
+							Type:        "list",
+							Description: "Filters to apply",
+							Optional:    true,
+						},
+						"default": {
+							Type:        "bool",
+							Description: "Return default VPC",
+							Optional:    true,
+						},
+						"cidr_block": {
+							Type:        "string",
+							Description: "VPC CIDR block",
+							Computed:    true,
+						},
+						"state": {
+							Type:        "string",
+							Description: "VPC state",
+							Computed:    true,
+						},
+					},
+				},
+			},
+			"data_subnet": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"subnet_id": {
+							Type:        "string",
+							Description: "Subnet ID to look up",
+							Optional:    true,
+						},
+						"vpc_id": {
+							Type:        "string",
+							Description: "VPC ID filter",
+							Optional:    true,
+						},
+						"filters": {
+							Type:        "list",
+							Description: "Filters to apply",
+							Optional:    true,
+						},
+						"cidr_block": {
+							Type:        "string",
+							Description: "Subnet CIDR block",
+							Computed:    true,
+						},
+						"availability_zone": {
+							Type:        "string",
+							Description: "Availability zone",
+							Computed:    true,
+						},
+					},
+				},
+			},
+			"data_availability_zones": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"state": {
+							Type:        "string",
+							Description: "Filter by state (available, information, impaired, unavailable)",
+							Optional:    true,
+						},
+						"names": {
+							Type:        "list",
+							Description: "List of availability zone names",
+							Computed:    true,
+						},
+						"zone_ids": {
+							Type:        "list",
+							Description: "List of availability zone IDs",
+							Computed:    true,
+						},
+					},
+				},
+			},
+			"data_caller_identity": {
+				Version: 1,
+				Block: &plugin.SchemaBlock{
+					Attributes: map[string]*plugin.Attribute{
+						"account_id": {
+							Type:        "string",
+							Description: "AWS account ID",
+							Computed:    true,
+						},
+						"arn": {
+							Type:        "string",
+							Description: "ARN of the caller",
+							Computed:    true,
+						},
+						"user_id": {
+							Type:        "string",
+							Description: "User ID",
 							Computed:    true,
 						},
 					},
@@ -298,6 +578,17 @@ func (p *AWSProvider) ApplyResourceChange(ctx context.Context, req *plugin.Apply
 			return p.destroySecurityGroup(ctx, req)
 		case "ec2":
 			return p.destroyEC2(ctx, req)
+		case "internet_gateway":
+			return p.destroyInternetGateway(ctx, req)
+		case "route_table":
+			return p.destroyRouteTable(ctx, req)
+		case "eip":
+			return p.destroyEIP(ctx, req)
+		case "nat_gateway":
+			return p.destroyNATGateway(ctx, req)
+		// Data sources don't need destroy
+		case "data_ami", "data_vpc", "data_subnet", "data_availability_zones", "data_caller_identity":
+			return &plugin.ApplyResourceChangeResponse{NewState: nil}, nil
 		default:
 			return &plugin.ApplyResourceChangeResponse{
 				Diagnostics: []*plugin.Diagnostic{
@@ -321,6 +612,25 @@ func (p *AWSProvider) ApplyResourceChange(ctx context.Context, req *plugin.Apply
 		return p.applySecurityGroup(ctx, req)
 	case "ec2":
 		return p.applyEC2(ctx, req)
+	case "internet_gateway":
+		return p.applyInternetGateway(ctx, req)
+	case "route_table":
+		return p.applyRouteTable(ctx, req)
+	case "eip":
+		return p.applyEIP(ctx, req)
+	case "nat_gateway":
+		return p.applyNATGateway(ctx, req)
+	// Data sources
+	case "data_ami":
+		return p.readDataAMI(ctx, req)
+	case "data_vpc":
+		return p.readDataVPC(ctx, req)
+	case "data_subnet":
+		return p.readDataSubnet(ctx, req)
+	case "data_availability_zones":
+		return p.readDataAvailabilityZones(ctx, req)
+	case "data_caller_identity":
+		return p.readDataCallerIdentity(ctx, req)
 	default:
 		return &plugin.ApplyResourceChangeResponse{
 			Diagnostics: []*plugin.Diagnostic{
@@ -556,9 +866,103 @@ func (p *AWSProvider) applySecurityGroup(ctx context.Context, req *plugin.ApplyR
 }
 
 func (p *AWSProvider) applyEC2(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
-	// TODO: Implement EC2 instance creation
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid EC2 configuration",
+					Detail:   "Configuration must be a map",
+				},
+			},
+		}, nil
+	}
+
+	ami, _ := config["ami"].(string)
+	instanceType, _ := config["instance_type"].(string)
+	subnetID, _ := config["subnet_id"].(string)
+
+	if ami == "" || instanceType == "" || subnetID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing required fields",
+					Detail:   "ami, instance_type, and subnet_id are required for EC2",
+				},
+			},
+		}, nil
+	}
+
+	// Extract optional parameters
+	keyName, _ := config["key_name"].(string)
+	userData, _ := config["user_data"].(string)
+	associatePublicIP, _ := config["associate_public_ip"].(bool)
+	
+	// Extract security groups
+	var securityGroups []string
+	if sgs, exists := config["security_groups"]; exists {
+		if sgList, ok := sgs.([]interface{}); ok {
+			for _, sg := range sgList {
+				if sgStr, ok := sg.(string); ok {
+					securityGroups = append(securityGroups, sgStr)
+				}
+			}
+		}
+	}
+
+	// Extract root volume configuration
+	var rootVolumeSize int32 = 8 // default
+	var rootVolumeType string = "gp3" // default
+	if size, exists := config["root_volume_size"]; exists {
+		if sizeFloat, ok := size.(float64); ok {
+			rootVolumeSize = int32(sizeFloat)
+		}
+	}
+	if volType, exists := config["root_volume_type"]; exists {
+		if volTypeStr, ok := volType.(string); ok {
+			rootVolumeType = volTypeStr
+		}
+	}
+
+	// Create EC2 instance using AWS client
+	instance, err := p.client.CreateEC2Instance(ctx, &EC2InstanceConfig{
+		AMI:               ami,
+		InstanceType:      instanceType,
+		SubnetID:          subnetID,
+		SecurityGroups:    securityGroups,
+		KeyName:           keyName,
+		UserData:          userData,
+		AssociatePublicIP: associatePublicIP,
+		RootVolumeSize:    rootVolumeSize,
+		RootVolumeType:    rootVolumeType,
+		Tags:              extractTags(config),
+	})
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to create EC2 instance",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	// Return new state
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["instance_id"] = instance.InstanceID
+	newState["public_ip"] = instance.PublicIP
+	newState["private_ip"] = instance.PrivateIP
+	newState["state"] = instance.State
+
 	return &plugin.ApplyResourceChangeResponse{
-		NewState: req.PlannedState,
+		NewState: newState,
 	}, nil
 }
 
@@ -703,7 +1107,45 @@ func (p *AWSProvider) destroySecurityGroup(ctx context.Context, req *plugin.Appl
 }
 
 func (p *AWSProvider) destroyEC2(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
-	// TODO: Implement EC2 instance termination
+	priorState, ok := req.PriorState.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid prior state",
+					Detail:   "Prior state must be a map",
+				},
+			},
+		}, nil
+	}
+
+	instanceID, ok := priorState["instance_id"].(string)
+	if !ok || instanceID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing Instance ID",
+					Detail:   "instance_id is required to terminate EC2 instance",
+				},
+			},
+		}, nil
+	}
+
+	// Terminate EC2 instance using AWS client
+	if err := p.client.TerminateEC2Instance(ctx, instanceID); err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to terminate EC2 instance",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
 	return &plugin.ApplyResourceChangeResponse{
 		NewState: nil,
 	}, nil
@@ -725,4 +1167,629 @@ func extractTags(config map[string]interface{}) map[string]string {
 	}
 	
 	return tags
+}
+
+// Internet Gateway methods
+
+func (p *AWSProvider) applyInternetGateway(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid Internet Gateway configuration",
+					Detail:   "Configuration must be a map",
+				},
+			},
+		}, nil
+	}
+
+	vpcID, _ := config["vpc_id"].(string)
+	if vpcID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing required field",
+					Detail:   "vpc_id is required for Internet Gateway",
+				},
+			},
+		}, nil
+	}
+
+	igw, err := p.client.CreateInternetGateway(ctx, vpcID, extractTags(config))
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to create Internet Gateway",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["gateway_id"] = igw.GatewayID
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
+}
+
+func (p *AWSProvider) destroyInternetGateway(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	priorState, ok := req.PriorState.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid prior state",
+					Detail:   "Prior state must be a map",
+				},
+			},
+		}, nil
+	}
+
+	gatewayID, _ := priorState["gateway_id"].(string)
+	vpcID, _ := priorState["vpc_id"].(string)
+
+	if gatewayID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing Gateway ID",
+					Detail:   "gateway_id is required to delete Internet Gateway",
+				},
+			},
+		}, nil
+	}
+
+	if err := p.client.DeleteInternetGateway(ctx, gatewayID, vpcID); err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to delete Internet Gateway",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: nil,
+	}, nil
+}
+
+// Route Table methods
+
+func (p *AWSProvider) applyRouteTable(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid Route Table configuration",
+					Detail:   "Configuration must be a map",
+				},
+			},
+		}, nil
+	}
+
+	vpcID, _ := config["vpc_id"].(string)
+	if vpcID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing required field",
+					Detail:   "vpc_id is required for Route Table",
+				},
+			},
+		}, nil
+	}
+
+	rt, err := p.client.CreateRouteTable(ctx, vpcID, extractTags(config))
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to create Route Table",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	// Add routes if specified
+	if routes, exists := config["routes"]; exists {
+		if routeList, ok := routes.([]interface{}); ok {
+			for _, route := range routeList {
+				if routeMap, ok := route.(map[string]interface{}); ok {
+					destCIDR, _ := routeMap["destination_cidr"].(string)
+					gatewayID, _ := routeMap["gateway_id"].(string)
+					natGatewayID, _ := routeMap["nat_gateway_id"].(string)
+					
+					if destCIDR != "" {
+						if err := p.client.CreateRoute(ctx, rt.RouteTableID, destCIDR, gatewayID, natGatewayID); err != nil {
+							fmt.Printf("Warning: failed to create route: %v\n", err)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["route_table_id"] = rt.RouteTableID
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
+}
+
+func (p *AWSProvider) destroyRouteTable(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	priorState, ok := req.PriorState.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid prior state",
+					Detail:   "Prior state must be a map",
+				},
+			},
+		}, nil
+	}
+
+	routeTableID, _ := priorState["route_table_id"].(string)
+	if routeTableID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing Route Table ID",
+					Detail:   "route_table_id is required to delete Route Table",
+				},
+			},
+		}, nil
+	}
+
+	if err := p.client.DeleteRouteTable(ctx, routeTableID); err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to delete Route Table",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: nil,
+	}, nil
+}
+
+// EIP methods
+
+func (p *AWSProvider) applyEIP(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid EIP configuration",
+					Detail:   "Configuration must be a map",
+				},
+			},
+		}, nil
+	}
+
+	eip, err := p.client.AllocateEIP(ctx, extractTags(config))
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to allocate EIP",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["allocation_id"] = eip.AllocationID
+	newState["public_ip"] = eip.PublicIP
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
+}
+
+func (p *AWSProvider) destroyEIP(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	priorState, ok := req.PriorState.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid prior state",
+					Detail:   "Prior state must be a map",
+				},
+			},
+		}, nil
+	}
+
+	allocationID, _ := priorState["allocation_id"].(string)
+	if allocationID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing Allocation ID",
+					Detail:   "allocation_id is required to release EIP",
+				},
+			},
+		}, nil
+	}
+
+	if err := p.client.ReleaseEIP(ctx, allocationID); err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to release EIP",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: nil,
+	}, nil
+}
+
+// NAT Gateway methods
+
+func (p *AWSProvider) applyNATGateway(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid NAT Gateway configuration",
+					Detail:   "Configuration must be a map",
+				},
+			},
+		}, nil
+	}
+
+	subnetID, _ := config["subnet_id"].(string)
+	allocationID, _ := config["allocation_id"].(string)
+
+	if subnetID == "" || allocationID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing required fields",
+					Detail:   "subnet_id and allocation_id are required for NAT Gateway",
+				},
+			},
+		}, nil
+	}
+
+	natGW, err := p.client.CreateNATGateway(ctx, subnetID, allocationID, extractTags(config))
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to create NAT Gateway",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["nat_gateway_id"] = natGW.NATGatewayID
+	newState["state"] = natGW.State
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
+}
+
+func (p *AWSProvider) destroyNATGateway(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	priorState, ok := req.PriorState.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid prior state",
+					Detail:   "Prior state must be a map",
+				},
+			},
+		}, nil
+	}
+
+	natGatewayID, _ := priorState["nat_gateway_id"].(string)
+	if natGatewayID == "" {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Missing NAT Gateway ID",
+					Detail:   "nat_gateway_id is required to delete NAT Gateway",
+				},
+			},
+		}, nil
+	}
+
+	if err := p.client.DeleteNATGateway(ctx, natGatewayID); err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to delete NAT Gateway",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: nil,
+	}, nil
+}
+
+// Data Source methods
+
+func (p *AWSProvider) readDataAMI(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid data source configuration",
+					Detail:   "Configuration must be a map",
+				},
+			},
+		}, nil
+	}
+
+	// Extract owners
+	var owners []string
+	if ownersList, exists := config["owners"]; exists {
+		if ownerArr, ok := ownersList.([]interface{}); ok {
+			for _, o := range ownerArr {
+				if oStr, ok := o.(string); ok {
+					owners = append(owners, oStr)
+				}
+			}
+		}
+	}
+
+	// Extract filters
+	var filters []AMIFilter
+	if filtersList, exists := config["filters"]; exists {
+		if filterArr, ok := filtersList.([]interface{}); ok {
+			for _, f := range filterArr {
+				if fMap, ok := f.(map[string]interface{}); ok {
+					name, _ := fMap["name"].(string)
+					var values []string
+					if valList, exists := fMap["values"]; exists {
+						if valArr, ok := valList.([]interface{}); ok {
+							for _, v := range valArr {
+								if vStr, ok := v.(string); ok {
+									values = append(values, vStr)
+								}
+							}
+						}
+					}
+					filters = append(filters, AMIFilter{Name: name, Values: values})
+				}
+			}
+		}
+	}
+
+	mostRecent, _ := config["most_recent"].(bool)
+
+	ami, err := p.client.DescribeAMI(ctx, owners, filters, mostRecent)
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to find AMI",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["ami_id"] = ami.AMIID
+	newState["name"] = ami.Name
+	newState["architecture"] = ami.Architecture
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
+}
+
+func (p *AWSProvider) readDataVPC(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid data source configuration",
+					Detail:   "Configuration must be a map",
+				},
+			},
+		}, nil
+	}
+
+	vpcID, _ := config["vpc_id"].(string)
+	isDefault, _ := config["default"].(bool)
+
+	vpc, err := p.client.DescribeVPC(ctx, vpcID, isDefault)
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to find VPC",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["vpc_id"] = vpc.VpcID
+	newState["cidr_block"] = vpc.CIDRBlock
+	newState["state"] = vpc.State
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
+}
+
+func (p *AWSProvider) readDataSubnet(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Invalid data source configuration",
+					Detail:   "Configuration must be a map",
+				},
+			},
+		}, nil
+	}
+
+	subnetID, _ := config["subnet_id"].(string)
+	vpcID, _ := config["vpc_id"].(string)
+
+	subnet, err := p.client.DescribeSubnet(ctx, subnetID, vpcID)
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to find Subnet",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["subnet_id"] = subnet.SubnetID
+	newState["cidr_block"] = subnet.CIDRBlock
+	newState["availability_zone"] = subnet.AvailabilityZone
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
+}
+
+func (p *AWSProvider) readDataAvailabilityZones(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	config, ok := req.Config.(map[string]interface{})
+	if !ok {
+		config = make(map[string]interface{})
+	}
+
+	state, _ := config["state"].(string)
+	if state == "" {
+		state = "available"
+	}
+
+	azs, err := p.client.DescribeAvailabilityZones(ctx, state)
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to describe availability zones",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	newState := make(map[string]interface{})
+	for k, v := range config {
+		newState[k] = v
+	}
+	newState["names"] = azs.Names
+	newState["zone_ids"] = azs.ZoneIDs
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
+}
+
+func (p *AWSProvider) readDataCallerIdentity(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
+	identity, err := p.client.GetCallerIdentity(ctx)
+	if err != nil {
+		return &plugin.ApplyResourceChangeResponse{
+			Diagnostics: []*plugin.Diagnostic{
+				{
+					Severity: "error",
+					Summary:  "Failed to get caller identity",
+					Detail:   err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	newState := make(map[string]interface{})
+	newState["account_id"] = identity.AccountID
+	newState["arn"] = identity.ARN
+	newState["user_id"] = identity.UserID
+
+	return &plugin.ApplyResourceChangeResponse{
+		NewState: newState,
+	}, nil
 }

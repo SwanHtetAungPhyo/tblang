@@ -332,6 +332,17 @@ func (e *Engine) getResourceColor(resourceType string) *color.Color {
 		return color.New(color.FgYellow, color.Bold)
 	case "ec2":
 		return color.New(color.FgRed, color.Bold)
+	case "internet_gateway":
+		return color.New(color.FgCyan, color.Bold)
+	case "route_table":
+		return color.New(color.FgMagenta, color.Bold)
+	case "eip":
+		return color.New(color.FgHiGreen, color.Bold)
+	case "nat_gateway":
+		return color.New(color.FgHiYellow, color.Bold)
+	// Data sources
+	case "data_ami", "data_vpc", "data_subnet", "data_availability_zones", "data_caller_identity":
+		return color.New(color.FgHiCyan)
 	default:
 		return color.New(color.FgWhite, color.Bold)
 	}
@@ -590,9 +601,53 @@ func (e *Engine) resolveResourceReferences(attrs map[string]interface{}) map[str
 						resolved[key] = groupID
 						continue
 					}
+				case "allocation_id":
+					if allocID, ok := resource.Attributes["allocation_id"].(string); ok {
+						resolved[key] = allocID
+						continue
+					}
+				case "gateway_id":
+					if gwID, ok := resource.Attributes["gateway_id"].(string); ok {
+						resolved[key] = gwID
+						continue
+					}
+				case "nat_gateway_id":
+					if natGwID, ok := resource.Attributes["nat_gateway_id"].(string); ok {
+						resolved[key] = natGwID
+						continue
+					}
 				}
 			}
 		}
+		
+		// Handle arrays (like security_groups)
+		if arrValue, ok := value.([]interface{}); ok {
+			resolvedArr := make([]interface{}, len(arrValue))
+			for i, item := range arrValue {
+				if strItem, ok := item.(string); ok {
+					// Check if this is a resource reference
+					if resource, exists := currentState.Resources[strItem]; exists {
+						// Resolve based on resource type
+						switch resource.Type {
+						case "security_group":
+							if groupID, ok := resource.Attributes["group_id"].(string); ok {
+								resolvedArr[i] = groupID
+								continue
+							}
+						case "subnet":
+							if subnetID, ok := resource.Attributes["subnet_id"].(string); ok {
+								resolvedArr[i] = subnetID
+								continue
+							}
+						}
+					}
+				}
+				resolvedArr[i] = item
+			}
+			resolved[key] = resolvedArr
+			continue
+		}
+		
 		// Keep original value if not resolved
 		resolved[key] = value
 	}
@@ -602,30 +657,55 @@ func (e *Engine) resolveResourceReferences(attrs map[string]interface{}) map[str
 
 func (e *Engine) destroyResources(ctx context.Context, currentState *state.State) error {
 	// Sort resources by type to ensure proper destruction order
-	// Order: security_group -> subnet -> vpc
+	// Order: ec2 -> nat_gateway -> eip -> route_table -> security_group -> subnet -> internet_gateway -> vpc
+	var ec2Instances []*state.ResourceState
+	var natGateways []*state.ResourceState
+	var eips []*state.ResourceState
+	var routeTables []*state.ResourceState
 	var securityGroups []*state.ResourceState
 	var subnets []*state.ResourceState
+	var internetGateways []*state.ResourceState
 	var vpcs []*state.ResourceState
+	var dataSources []*state.ResourceState
 	var others []*state.ResourceState
 	
 	for _, resource := range currentState.Resources {
 		switch resource.Type {
+		case "ec2":
+			ec2Instances = append(ec2Instances, resource)
+		case "nat_gateway":
+			natGateways = append(natGateways, resource)
+		case "eip":
+			eips = append(eips, resource)
+		case "route_table":
+			routeTables = append(routeTables, resource)
 		case "security_group":
 			securityGroups = append(securityGroups, resource)
 		case "subnet":
 			subnets = append(subnets, resource)
+		case "internet_gateway":
+			internetGateways = append(internetGateways, resource)
 		case "vpc":
 			vpcs = append(vpcs, resource)
+		case "data_ami", "data_vpc", "data_subnet", "data_availability_zones", "data_caller_identity":
+			dataSources = append(dataSources, resource)
 		default:
 			others = append(others, resource)
 		}
 	}
 	
-	// Destroy in proper order: security groups first, then subnets, then VPCs
-	orderedResources := append([]*state.ResourceState{}, securityGroups...)
+	// Destroy in proper order: EC2 first, then dependent resources, then VPCs last
+	orderedResources := append([]*state.ResourceState{}, ec2Instances...)
+	orderedResources = append(orderedResources, natGateways...)
+	orderedResources = append(orderedResources, eips...)
+	orderedResources = append(orderedResources, routeTables...)
+	orderedResources = append(orderedResources, securityGroups...)
 	orderedResources = append(orderedResources, subnets...)
+	orderedResources = append(orderedResources, internetGateways...)
 	orderedResources = append(orderedResources, others...)
 	orderedResources = append(orderedResources, vpcs...)
+	// Data sources don't need to be destroyed, but remove from state
+	orderedResources = append(orderedResources, dataSources...)
 	
 	// Destroy each resource
 	for _, resource := range orderedResources {

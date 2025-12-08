@@ -1,0 +1,45 @@
+// TBLang Print Function Test
+// Demonstrates the print() and output() functions
+
+cloud_vendor "aws" {
+    region = "us-east-1"
+    profile = "default"
+}
+
+// Simple print statements
+print("Hello from TBLang!");
+print("Testing print function...");
+
+// Print with variables
+declare message = "This is a variable message";
+print(message);
+
+// Print objects
+declare config = {
+    name: "test-config"
+    value: 42
+    enabled: true
+    nested: {
+        key: "nested-value"
+    }
+};
+
+print("Configuration:", config);
+
+// Print arrays
+declare items = ["item1", "item2", "item3"];
+print("Items:", items);
+
+// Output function (formatted)
+output("Test Label", "Test Value");
+output("Config Object", config);
+
+// Print in loops
+declare environments = ["dev", "staging", "prod"];
+
+for env in environments {
+    print("Processing environment:", env);
+}
+
+print("");
+print("=== Print test complete! ===");
