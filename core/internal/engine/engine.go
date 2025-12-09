@@ -36,18 +36,16 @@ var (
 	deleteColor  = color.New(color.FgRed)
 )
 
-// NewEngine creates a new TBLang core engine
 func New() *Engine {
 	workingDir, _ := os.Getwd()
-	
-	// Try multiple plugin directories in order of preference
+
 	pluginDirs := []string{
-		"/usr/local/lib/tblang/plugins",                    // Manual install
-		"/opt/homebrew/opt/tblang/lib/tblang/plugins",      // Homebrew (Apple Silicon)
-		"/usr/local/opt/tblang/lib/tblang/plugins",         // Homebrew (Intel)
-		filepath.Join(workingDir, ".tblang", "plugins"),    // Local project
+		"/usr/local/lib/tblang/plugins",                 // Manual install
+		"/opt/homebrew/opt/tblang/lib/tblang/plugins",   // Homebrew (Apple Silicon)
+		"/usr/local/opt/tblang/lib/tblang/plugins",      // Homebrew (Intel)
+		filepath.Join(workingDir, ".tblang", "plugins"), // Local project
 	}
-	
+
 	var pluginDir string
 	for _, dir := range pluginDirs {
 		if _, err := os.Stat(dir); err == nil {
@@ -55,12 +53,12 @@ func New() *Engine {
 			break
 		}
 	}
-	
+
 	// Default to local if none found
 	if pluginDir == "" {
 		pluginDir = filepath.Join(workingDir, ".tblang", "plugins")
 	}
-	
+
 	return &Engine{
 		compiler:      compiler.New(),
 		stateManager:  state.NewManager(filepath.Join(workingDir, ".tblang")),
@@ -71,7 +69,6 @@ func New() *Engine {
 
 // Initialize initializes the engine and discovers plugins
 func (e *Engine) Initialize(ctx context.Context) error {
-	// Discover available plugins
 	if err := e.pluginManager.DiscoverPlugins(); err != nil {
 		return fmt.Errorf("failed to discover plugins: %w", err)
 	}
@@ -83,7 +80,7 @@ func (e *Engine) Initialize(ctx context.Context) error {
 // Plan shows what changes will be made
 func (e *Engine) Plan(ctx context.Context, filename string) error {
 	fmt.Println("Planning infrastructure changes...")
-	
+
 	// Compile the tblang file
 	program, err := e.compiler.CompileFile(filename)
 	if err != nil {
@@ -94,65 +91,58 @@ func (e *Engine) Plan(ctx context.Context, filename string) error {
 	if err := e.loadRequiredPlugins(ctx, program); err != nil {
 		return fmt.Errorf("failed to load plugins: %w", err)
 	}
-	
+
 	// Load current state
 	currentState, err := e.stateManager.LoadState()
 	if err != nil {
 		fmt.Println("No existing state found, will create new infrastructure")
 		currentState = &state.State{Resources: make(map[string]*state.ResourceState)}
 	}
-	
+
 	// Compare desired vs current state
 	changes := e.calculateChanges(program, currentState)
-	
+
 	// Display plan
 	e.displayPlan(changes)
-	
+
 	return nil
 }
 
 // Apply creates/updates the infrastructure
 func (e *Engine) Apply(ctx context.Context, filename string) error {
 	infoColor.Println("Applying infrastructure changes...")
-	
-	// Compile the tblang file
+
 	program, err := e.compiler.CompileFile(filename)
 	if err != nil {
 		return fmt.Errorf("compilation failed: %w", err)
 	}
 
-	// Load and configure required plugins
 	if err := e.loadAndConfigurePlugins(ctx, program); err != nil {
 		return fmt.Errorf("failed to load plugins: %w", err)
 	}
-	
-	// Load current state
+
 	currentState, err := e.stateManager.LoadState()
 	if err != nil {
 		currentState = &state.State{Resources: make(map[string]*state.ResourceState)}
 	}
-	
-	// Compare desired vs current state
+
 	changes := e.calculateChanges(program, currentState)
-	
-	// Display plan
+
 	e.displayPlan(changes)
-	
-	// Ask for confirmation
+
 	fmt.Print("\nDo you want to perform these actions? (yes/no): ")
 	var response string
 	fmt.Scanln(&response)
-	
+
 	if response != "yes" && response != "y" {
 		warningColor.Println("Apply cancelled.")
 		return nil
 	}
-	
-	// Apply changes using plugins
+
 	if err := e.applyChanges(ctx, changes, currentState); err != nil {
 		return fmt.Errorf("apply failed: %w", err)
 	}
-	
+
 	successColor.Println("\nApply complete!")
 	return nil
 }
@@ -160,7 +150,7 @@ func (e *Engine) Apply(ctx context.Context, filename string) error {
 // Destroy removes all infrastructure
 func (e *Engine) Destroy(ctx context.Context, filename string) error {
 	fmt.Println("Destroying infrastructure...")
-	
+
 	// Compile the tblang file to get cloud vendor configuration (including profile)
 	program, err := e.compiler.CompileFile(filename)
 	if err != nil {
@@ -171,7 +161,7 @@ func (e *Engine) Destroy(ctx context.Context, filename string) error {
 	if err := e.loadAndConfigurePlugins(ctx, program); err != nil {
 		return fmt.Errorf("failed to load plugins: %w", err)
 	}
-	
+
 	// Load current state
 	currentState, err := e.stateManager.LoadState()
 	if err != nil {
@@ -184,12 +174,12 @@ func (e *Engine) Destroy(ctx context.Context, filename string) error {
 	for name, resource := range currentState.Resources {
 		fmt.Printf("  - %s (%s)\n", name, resource.Type)
 	}
-	
+
 	// Ask for confirmation
 	fmt.Print("\nDo you really want to destroy all resources? (yes/no): ")
 	var response string
 	fmt.Scanln(&response)
-	
+
 	if response != "yes" && response != "y" {
 		fmt.Println("Destroy cancelled.")
 		return nil
@@ -199,7 +189,7 @@ func (e *Engine) Destroy(ctx context.Context, filename string) error {
 	if err := e.destroyResources(ctx, currentState); err != nil {
 		return fmt.Errorf("failed to destroy resources: %w", err)
 	}
-	
+
 	fmt.Println("Destroy complete!")
 	return nil
 }
@@ -207,18 +197,18 @@ func (e *Engine) Destroy(ctx context.Context, filename string) error {
 // Show displays current infrastructure state
 func (e *Engine) Show() error {
 	fmt.Println("Current infrastructure state:")
-	
+
 	currentState, err := e.stateManager.LoadState()
 	if err != nil {
 		fmt.Println("No state found")
 		return nil
 	}
-	
+
 	if len(currentState.Resources) == 0 {
 		fmt.Println("No resources found")
 		return nil
 	}
-	
+
 	for name, resource := range currentState.Resources {
 		fmt.Printf("\nResource: %s\n", name)
 		fmt.Printf("   Type: %s\n", resource.Type)
@@ -230,7 +220,7 @@ func (e *Engine) Show() error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -248,10 +238,10 @@ func (e *Engine) Graph(ctx context.Context, filename string) error {
 func (e *Engine) displayVisualGraph(program *compiler.Program) {
 	headerColor.Println("\nDependency Graph & Deployment Order:")
 	headerColor.Println(strings.Repeat("=", 50))
-	
+
 	// Create a simplified dependency map
 	dependencies := make(map[string][]string)
-	
+
 	// Analyze dependencies from resource properties
 	for _, resource := range program.Resources {
 		var deps []string
@@ -266,7 +256,7 @@ func (e *Engine) displayVisualGraph(program *compiler.Program) {
 		}
 		dependencies[resource.Name] = e.removeDuplicates(deps)
 	}
-	
+
 	// Display visual graph
 	fmt.Println()
 	for i, resource := range program.Resources {
@@ -274,7 +264,7 @@ func (e *Engine) displayVisualGraph(program *compiler.Program) {
 		resourceColor := e.getResourceColor(resource.Type)
 		resourceColor.Printf("[%d] %s", i+1, resource.Name)
 		fmt.Printf(" (%s)\n", resource.Type)
-		
+
 		// Show dependencies
 		if deps := dependencies[resource.Name]; len(deps) > 0 {
 			infoColor.Print("    Dependencies: ")
@@ -288,18 +278,18 @@ func (e *Engine) displayVisualGraph(program *compiler.Program) {
 		} else {
 			infoColor.Println("    No dependencies")
 		}
-		
+
 		if i < len(program.Resources)-1 {
 			fmt.Println("    |")
 			fmt.Println("    v")
 		}
 	}
-	
+
 	// Display deployment flow
 	fmt.Println()
 	headerColor.Println("Deployment Flow:")
 	headerColor.Println(strings.Repeat("-", 30))
-	
+
 	for i, resource := range program.Resources {
 		resourceColor := e.getResourceColor(resource.Type)
 		if i > 0 {
@@ -351,12 +341,12 @@ func (e *Engine) getResourceColor(resourceType string) *color.Color {
 func (e *Engine) findResourceReferences(value interface{}, resources []*ast.Resource) []string {
 	var refs []string
 	resourceNames := make(map[string]bool)
-	
+
 	// Build resource name map
 	for _, res := range resources {
 		resourceNames[res.Name] = true
 	}
-	
+
 	switch v := value.(type) {
 	case string:
 		// Only add if it's a different resource (not self-reference)
@@ -372,7 +362,7 @@ func (e *Engine) findResourceReferences(value interface{}, resources []*ast.Reso
 			refs = append(refs, e.findResourceReferences(val, resources)...)
 		}
 	}
-	
+
 	return refs
 }
 
@@ -393,20 +383,18 @@ func (e *Engine) loadRequiredPlugins(ctx context.Context, program *compiler.Prog
 	for providerName, config := range program.CloudVendors {
 		infoColor.Printf("Found provider: %s\n", providerName)
 		fmt.Printf("  Region: %v\n", config.Properties["region"])
-		
-		// Set AWS profile if specified in configuration
+
 		if profile, exists := config.Properties["profile"]; exists {
 			if profileStr, ok := profile.(string); ok {
 				os.Setenv("AWS_PROFILE", profileStr)
 				infoColor.Printf("  Profile: %s\n", profileStr)
 			}
 		}
-		
+
 		if accountID, exists := config.Properties["account_id"]; exists {
 			fmt.Printf("  Account ID: %v\n", accountID)
 		}
-		
-		// For now, skip plugin loading and use mock mode for testing
+
 		successColor.Printf("Provider %s configured (mock mode)\n", providerName)
 	}
 
@@ -414,11 +402,10 @@ func (e *Engine) loadRequiredPlugins(ctx context.Context, program *compiler.Prog
 }
 
 func (e *Engine) loadAndConfigurePlugins(ctx context.Context, program *compiler.Program) error {
-	// Extract required providers from cloud_vendor blocks
 	for providerName, config := range program.CloudVendors {
 		infoColor.Printf("Found provider: %s\n", providerName)
 		fmt.Printf("  Region: %v\n", config.Properties["region"])
-		
+
 		// Set AWS profile if specified in configuration
 		if profile, exists := config.Properties["profile"]; exists {
 			if profileStr, ok := profile.(string); ok {
@@ -426,22 +413,20 @@ func (e *Engine) loadAndConfigurePlugins(ctx context.Context, program *compiler.
 				infoColor.Printf("  Profile: %s\n", profileStr)
 			}
 		}
-		
+
 		if accountID, exists := config.Properties["account_id"]; exists {
 			fmt.Printf("  Account ID: %v\n", accountID)
 		}
-		
-		// Load the plugin
+
 		_, err := e.pluginManager.LoadPlugin(ctx, providerName)
 		if err != nil {
 			return fmt.Errorf("failed to load plugin %s: %w", providerName, err)
 		}
-		
-		// Configure the plugin
+
 		if err := e.pluginManager.ConfigurePlugin(ctx, providerName, config.Properties); err != nil {
 			return fmt.Errorf("failed to configure plugin %s: %w", providerName, err)
 		}
-		
+
 		successColor.Printf("Provider %s loaded and configured\n", providerName)
 	}
 
@@ -454,8 +439,7 @@ func (e *Engine) calculateChanges(program *compiler.Program, currentState *state
 		Update: make([]*state.ResourceState, 0),
 		Delete: make([]*state.ResourceState, 0),
 	}
-	
-	// Check for new resources to create
+
 	for _, resource := range program.Resources {
 		if _, exists := currentState.Resources[resource.Name]; !exists {
 			changes.Create = append(changes.Create, &state.ResourceState{
@@ -466,7 +450,7 @@ func (e *Engine) calculateChanges(program *compiler.Program, currentState *state
 			})
 		}
 	}
-	
+
 	// Check for resources to delete (exist in state but not in config)
 	programResources := make(map[string]bool)
 	for _, resource := range program.Resources {
@@ -478,7 +462,7 @@ func (e *Engine) calculateChanges(program *compiler.Program, currentState *state
 			changes.Delete = append(changes.Delete, resource)
 		}
 	}
-	
+
 	return changes
 }
 
@@ -487,42 +471,42 @@ func (e *Engine) applyChanges(ctx context.Context, changes *PlanChanges, current
 	for _, resource := range changes.Create {
 		resourceColor := e.getResourceColor(resource.Type)
 		resourceColor.Printf("\nCreating %s (%s)...\n", resource.Name, resource.Type)
-		
+
 		// Use plugin to create resource
 		newState, err := e.createResourceWithPlugin(ctx, resource)
 		if err != nil {
 			errorColor.Printf("  ✗ Failed to create %s: %v\n", resource.Name, err)
 			return fmt.Errorf("failed to create %s: %w", resource.Name, err)
 		}
-		
+
 		// Update resource with new state from plugin
 		if newState != nil {
 			if stateMap, ok := newState.(map[string]interface{}); ok {
 				resource.Attributes = stateMap
 			}
 		}
-		
+
 		// Update state
 		resource.Status = "created"
 		currentState.Resources[resource.Name] = resource
 		if err := e.stateManager.SaveState(currentState); err != nil {
 			return fmt.Errorf("failed to save state: %w", err)
 		}
-		
+
 		successColor.Printf("  ✓ Created %s (%s)\n", resource.Name, resource.Type)
 	}
 
 	// Apply deletes
 	for _, resource := range changes.Delete {
 		warningColor.Printf("\nDeleting %s (%s)...\n", resource.Name, resource.Type)
-		
+
 		// Use plugin to delete resource
 		if err := e.destroyResourceWithPlugin(ctx, resource); err != nil {
 			errorColor.Printf("  ✗ Failed to delete %s: %v\n", resource.Name, err)
 		} else {
 			successColor.Printf("  ✓ Deleted %s (%s)\n", resource.Name, resource.Type)
 		}
-		
+
 		// Remove from state
 		delete(currentState.Resources, resource.Name)
 		if err := e.stateManager.SaveState(currentState); err != nil {
@@ -572,13 +556,13 @@ func (e *Engine) createResourceWithPlugin(ctx context.Context, resource *state.R
 
 func (e *Engine) resolveResourceReferences(attrs map[string]interface{}) map[string]interface{} {
 	resolved := make(map[string]interface{})
-	
+
 	// Load current state to resolve references
 	currentState, err := e.stateManager.LoadState()
 	if err != nil {
 		return attrs // Return original if can't load state
 	}
-	
+
 	for key, value := range attrs {
 		// Check if value is a string that might be a resource reference
 		if strValue, ok := value.(string); ok {
@@ -619,7 +603,7 @@ func (e *Engine) resolveResourceReferences(attrs map[string]interface{}) map[str
 				}
 			}
 		}
-		
+
 		// Handle arrays (like security_groups)
 		if arrValue, ok := value.([]interface{}); ok {
 			resolvedArr := make([]interface{}, len(arrValue))
@@ -647,11 +631,11 @@ func (e *Engine) resolveResourceReferences(attrs map[string]interface{}) map[str
 			resolved[key] = resolvedArr
 			continue
 		}
-		
+
 		// Keep original value if not resolved
 		resolved[key] = value
 	}
-	
+
 	return resolved
 }
 
@@ -668,7 +652,7 @@ func (e *Engine) destroyResources(ctx context.Context, currentState *state.State
 	var vpcs []*state.ResourceState
 	var dataSources []*state.ResourceState
 	var others []*state.ResourceState
-	
+
 	for _, resource := range currentState.Resources {
 		switch resource.Type {
 		case "ec2":
@@ -693,7 +677,7 @@ func (e *Engine) destroyResources(ctx context.Context, currentState *state.State
 			others = append(others, resource)
 		}
 	}
-	
+
 	// Destroy in proper order: EC2 first, then dependent resources, then VPCs last
 	orderedResources := append([]*state.ResourceState{}, ec2Instances...)
 	orderedResources = append(orderedResources, natGateways...)
@@ -706,11 +690,11 @@ func (e *Engine) destroyResources(ctx context.Context, currentState *state.State
 	orderedResources = append(orderedResources, vpcs...)
 	// Data sources don't need to be destroyed, but remove from state
 	orderedResources = append(orderedResources, dataSources...)
-	
+
 	// Destroy each resource
 	for _, resource := range orderedResources {
 		warningColor.Printf("Destroying %s (%s)...\n", resource.Name, resource.Type)
-		
+
 		// Use plugin to destroy resource
 		if err := e.destroyResourceWithPlugin(ctx, resource); err != nil {
 			errorColor.Printf("  Error: failed to destroy %s: %v\n", resource.Name, err)
@@ -718,7 +702,7 @@ func (e *Engine) destroyResources(ctx context.Context, currentState *state.State
 		} else {
 			successColor.Printf("Deleted %s (%s)\n", resource.Name, resource.Type)
 		}
-		
+
 		// Remove from state
 		delete(currentState.Resources, resource.Name)
 		if err := e.stateManager.SaveState(currentState); err != nil {
@@ -763,7 +747,7 @@ func (e *Engine) destroyResourceWithPlugin(ctx context.Context, resource *state.
 
 func (e *Engine) displayPlan(changes *PlanChanges) {
 	headerColor.Println("\nPlan Summary:")
-	
+
 	if len(changes.Create) > 0 {
 		createColor.Printf("\nResources to create (%d):\n", len(changes.Create))
 		for _, resource := range changes.Create {
@@ -771,7 +755,7 @@ func (e *Engine) displayPlan(changes *PlanChanges) {
 			fmt.Printf("(%s)\n", resource.Type)
 		}
 	}
-	
+
 	if len(changes.Update) > 0 {
 		updateColor.Printf("\nResources to update (%d):\n", len(changes.Update))
 		for _, resource := range changes.Update {
@@ -779,7 +763,7 @@ func (e *Engine) displayPlan(changes *PlanChanges) {
 			fmt.Printf("(%s)\n", resource.Type)
 		}
 	}
-	
+
 	if len(changes.Delete) > 0 {
 		deleteColor.Printf("\nResources to delete (%d):\n", len(changes.Delete))
 		for _, resource := range changes.Delete {
@@ -787,7 +771,7 @@ func (e *Engine) displayPlan(changes *PlanChanges) {
 			fmt.Printf("(%s)\n", resource.Type)
 		}
 	}
-	
+
 	if len(changes.Create) == 0 && len(changes.Update) == 0 && len(changes.Delete) == 0 {
 		infoColor.Println("\nNo changes. Infrastructure is up-to-date.")
 	}
@@ -806,45 +790,45 @@ func (e *Engine) createVPCWithAWSCLI(resource *state.ResourceState) error {
 	if !ok {
 		return fmt.Errorf("cidr_block not found in VPC configuration")
 	}
-	
+
 	infoColor.Printf("  Creating VPC with CIDR: %s\n", cidrBlock)
-	
+
 	// Create VPC using AWS CLI
 	cmd := exec.Command("aws", "ec2", "create-vpc", "--cidr-block", cidrBlock, "--output", "json")
 	output, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("aws cli error: %w", err)
 	}
-	
+
 	// Parse the output to get VPC ID
 	var result map[string]interface{}
 	if err := json.Unmarshal(output, &result); err != nil {
 		return fmt.Errorf("failed to parse AWS CLI output: %w", err)
 	}
-	
+
 	vpc, ok := result["Vpc"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid AWS CLI response format")
 	}
-	
+
 	vpcID, ok := vpc["VpcId"].(string)
 	if !ok {
 		return fmt.Errorf("VPC ID not found in response")
 	}
-	
+
 	// Update resource attributes with actual VPC ID
 	resource.Attributes["vpc_id"] = vpcID
 	resource.Attributes["state"] = vpc["State"]
-	
+
 	successColor.Printf("  VPC created with ID: %s\n", vpcID)
-	
+
 	// Add tags if specified
 	if tags, exists := resource.Attributes["tags"]; exists {
 		if err := e.tagVPCWithAWSCLI(vpcID, tags); err != nil {
 			fmt.Printf("  Warning: failed to tag VPC: %v\n", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -853,7 +837,7 @@ func (e *Engine) tagVPCWithAWSCLI(vpcID string, tags interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid tags format")
 	}
-	
+
 	for key, value := range tagsMap {
 		tagSpec := fmt.Sprintf("Key=%s,Value=%s", key, value)
 		cmd := exec.Command("aws", "ec2", "create-tags", "--resources", vpcID, "--tags", tagSpec)
@@ -861,7 +845,7 @@ func (e *Engine) tagVPCWithAWSCLI(vpcID string, tags interface{}) error {
 			return fmt.Errorf("failed to tag VPC with %s=%s: %w", key, value, err)
 		}
 	}
-	
+
 	successColor.Printf("  VPC tagged successfully\n")
 	return nil
 }
@@ -871,15 +855,15 @@ func (e *Engine) deleteVPCWithAWSCLI(resource *state.ResourceState) error {
 	if !ok {
 		return fmt.Errorf("vpc_id not found in resource state")
 	}
-	
+
 	fmt.Printf("  Deleting VPC: %s\n", vpcID)
-	
+
 	// Delete VPC using AWS CLI
 	cmd := exec.Command("aws", "ec2", "delete-vpc", "--vpc-id", vpcID)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("aws cli error: %w", err)
 	}
-	
+
 	fmt.Printf("  ✓ VPC deleted: %s\n", vpcID)
 	return nil
 }
@@ -890,18 +874,18 @@ func (e *Engine) createSubnetWithAWSCLI(resource *state.ResourceState, currentSt
 	if !ok {
 		return fmt.Errorf("cidr_block not found in Subnet configuration")
 	}
-	
+
 	availabilityZone, ok := resource.Attributes["availability_zone"].(string)
 	if !ok {
 		return fmt.Errorf("availability_zone not found in Subnet configuration")
 	}
-	
+
 	// Resolve VPC ID from dependency
 	vpcRef, ok := resource.Attributes["vpc_id"].(string)
 	if !ok {
 		return fmt.Errorf("vpc_id not found in Subnet configuration")
 	}
-	
+
 	// Find the VPC resource in current state
 	var vpcID string
 	for _, res := range currentState.Resources {
@@ -912,48 +896,45 @@ func (e *Engine) createSubnetWithAWSCLI(resource *state.ResourceState, currentSt
 			}
 		}
 	}
-	
+
 	if vpcID == "" {
 		return fmt.Errorf("could not resolve VPC ID for reference: %s", vpcRef)
 	}
-	
+
 	infoColor.Printf("  Creating Subnet with CIDR: %s in VPC: %s\n", cidrBlock, vpcID)
-	
-	// Create Subnet using AWS CLI
-	cmd := exec.Command("aws", "ec2", "create-subnet", 
+
+	cmd := exec.Command("aws", "ec2", "create-subnet",
 		"--vpc-id", vpcID,
 		"--cidr-block", cidrBlock,
 		"--availability-zone", availabilityZone,
 		"--output", "json")
-	
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("aws cli error: %w, output: %s", err, string(output))
 	}
-	
-	// Parse the output to get Subnet ID
+
 	var result map[string]interface{}
 	if err := json.Unmarshal(output, &result); err != nil {
 		return fmt.Errorf("failed to parse AWS CLI output: %w", err)
 	}
-	
+
 	subnet, ok := result["Subnet"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid AWS CLI response format")
 	}
-	
+
 	subnetID, ok := subnet["SubnetId"].(string)
 	if !ok {
 		return fmt.Errorf("Subnet ID not found in response")
 	}
-	
-	// Update resource attributes with actual Subnet ID
+
 	resource.Attributes["subnet_id"] = subnetID
 	resource.Attributes["vpc_id"] = vpcID // Store resolved VPC ID
 	resource.Attributes["state"] = subnet["State"]
-	
+
 	successColor.Printf("  Subnet created with ID: %s\n", subnetID)
-	
+
 	// Configure public IP mapping if specified
 	if mapPublicIP, exists := resource.Attributes["map_public_ip"]; exists {
 		if mapPublic, ok := mapPublicIP.(bool); ok && mapPublic {
@@ -962,14 +943,14 @@ func (e *Engine) createSubnetWithAWSCLI(resource *state.ResourceState, currentSt
 			}
 		}
 	}
-	
+
 	// Add tags if specified
 	if tags, exists := resource.Attributes["tags"]; exists {
 		if err := e.tagSubnetWithAWSCLI(subnetID, tags); err != nil {
 			fmt.Printf("  Warning: failed to tag Subnet: %v\n", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -977,17 +958,17 @@ func (e *Engine) configureSubnetPublicIP(subnetID string, mapPublicIP bool) erro
 	cmd := exec.Command("aws", "ec2", "modify-subnet-attribute",
 		"--subnet-id", subnetID,
 		"--map-public-ip-on-launch")
-	
+
 	if !mapPublicIP {
 		cmd = exec.Command("aws", "ec2", "modify-subnet-attribute",
 			"--subnet-id", subnetID,
 			"--no-map-public-ip-on-launch")
 	}
-	
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to configure public IP mapping: %w", err)
 	}
-	
+
 	successColor.Printf("  Subnet public IP mapping configured\n")
 	return nil
 }
@@ -997,7 +978,7 @@ func (e *Engine) tagSubnetWithAWSCLI(subnetID string, tags interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid tags format")
 	}
-	
+
 	for key, value := range tagsMap {
 		tagSpec := fmt.Sprintf("Key=%s,Value=%s", key, value)
 		cmd := exec.Command("aws", "ec2", "create-tags", "--resources", subnetID, "--tags", tagSpec)
@@ -1005,7 +986,7 @@ func (e *Engine) tagSubnetWithAWSCLI(subnetID string, tags interface{}) error {
 			return fmt.Errorf("failed to tag Subnet with %s=%s: %w", key, value, err)
 		}
 	}
-	
+
 	successColor.Printf("  Subnet tagged successfully\n")
 	return nil
 }
@@ -1015,15 +996,14 @@ func (e *Engine) deleteSubnetWithAWSCLI(resource *state.ResourceState) error {
 	if !ok {
 		return fmt.Errorf("subnet_id not found in resource state")
 	}
-	
+
 	fmt.Printf("  Deleting Subnet: %s\n", subnetID)
-	
-	// Delete Subnet using AWS CLI
+
 	cmd := exec.Command("aws", "ec2", "delete-subnet", "--subnet-id", subnetID)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("aws cli error: %w", err)
 	}
-	
+
 	fmt.Printf("  ✓ Subnet deleted: %s\n", subnetID)
 	return nil
 }
