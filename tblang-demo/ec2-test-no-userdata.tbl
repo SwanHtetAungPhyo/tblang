@@ -1,0 +1,52 @@
+// Simple EC2 test without user data
+cloud_vendor "aws" {
+    region = "us-east-1"
+    profile = "default"
+}
+
+// VPC
+declare main_vpc = vpc("test-vpc", {
+    cidr_block: "10.0.0.0/16"
+    tags: {Name: "test-vpc"}
+});
+
+// Subnet
+declare public_subnet = subnet("test-subnet", {
+    vpc_id: main_vpc
+    cidr_block: "10.0.1.0/24"
+    availability_zone: "us-east-1a"
+    map_public_ip: true
+    tags: {Name: "test-subnet"}
+});
+
+// Security Group
+declare web_sg = security_group("test-sg", {
+    vpc_id: main_vpc
+    name: "test-sg"
+    description: "Test security group"
+    ingress_rules: [{
+        protocol: "tcp"
+        from_port: 22
+        to_port: 22
+        cidr_blocks: ["0.0.0.0/0"]
+    }]
+    egress_rules: [{
+        protocol: "-1"
+        from_port: 0
+        to_port: 0
+        cidr_blocks: ["0.0.0.0/0"]
+    }]
+    tags: {Name: "test-sg"}
+});
+
+// EC2 without user data
+declare web_server = ec2("test-instance", {
+    ami: "ami-0156001f0548e90b1"
+    instance_type: "t2.micro"
+    subnet_id: public_subnet
+    security_groups: [web_sg]
+    associate_public_ip: true
+    tags: {Name: "test-instance"}
+});
+
+print("EC2 instance created!");
