@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	// Color definitions
+
 	successColor = color.New(color.FgGreen, color.Bold)
 	errorColor   = color.New(color.FgRed, color.Bold)
 	warningColor = color.New(color.FgYellow, color.Bold)
@@ -129,7 +129,7 @@ func printCredits() {
 	cyan := color.New(color.FgCyan, color.Bold)
 	magenta := color.New(color.FgMagenta, color.Bold)
 	yellow := color.New(color.FgYellow)
-	
+
 	cyan.Println("\n╔════════════════════════════════════════════════════════╗")
 	magenta.Println("║              Developed with ❤️  by                     ║")
 	yellow.Println("║                                                        ║")
@@ -140,25 +140,22 @@ func printCredits() {
 }
 
 func init() {
-	// Custom version template
+
 	rootCmd.SetVersionTemplate(`{{with .Name}}{{printf "%s " .}}{{end}}{{printf "version %s" .Version}}
 {{- with .Short}}
 {{.}}{{end}}
 
 ` + getCreditsString())
-	
-	// Add subcommands
+
 	rootCmd.AddCommand(planCmd)
 	rootCmd.AddCommand(applyCmd)
 	rootCmd.AddCommand(destroyCmd)
 	rootCmd.AddCommand(showCmd)
 	rootCmd.AddCommand(graphCmd)
 	rootCmd.AddCommand(pluginsCmd)
-	
-	// Add plugin subcommands
+
 	pluginsCmd.AddCommand(pluginsListCmd)
-	
-	// Global flags
+
 	rootCmd.PersistentFlags().Bool("no-color", false, "Disable colored output")
 }
 
@@ -166,7 +163,7 @@ func getCreditsString() string {
 	cyan := color.New(color.FgCyan, color.Bold)
 	magenta := color.New(color.FgMagenta, color.Bold)
 	green := color.New(color.FgGreen, color.Bold)
-	
+
 	return cyan.Sprint("╔════════════════════════════════════════════════════════╗\n") +
 		magenta.Sprint("║              Developed with ❤️  by                     ║\n") +
 		cyan.Sprint("║                                                        ║\n") +
@@ -177,11 +174,10 @@ func getCreditsString() string {
 }
 
 func runWithEngine(fn func(context.Context, *engine.Engine) error) error {
-	// Create context that cancels on interrupt
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Handle interrupt signals
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -190,12 +186,10 @@ func runWithEngine(fn func(context.Context, *engine.Engine) error) error {
 		cancel()
 	}()
 
-	// Check for no-color flag
 	if noColor, _ := rootCmd.PersistentFlags().GetBool("no-color"); noColor {
 		color.NoColor = true
 	}
 
-	// Initialize TBLang engine
 	tblangEngine := engine.New()
 	defer tblangEngine.Shutdown()
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 )
 
-// handlePrint handles the print() function for debugging output
 func (w *ASTWalker) handlePrint(args []interface{}) {
 	for i, arg := range args {
 		if i > 0 {
@@ -15,13 +14,11 @@ func (w *ASTWalker) handlePrint(args []interface{}) {
 	fmt.Println()
 }
 
-// handleOutput handles the output() function with formatted output
 func (w *ASTWalker) handleOutput(args []interface{}) {
 	if len(args) == 0 {
 		return
 	}
 
-	// First argument is the label/name
 	if len(args) >= 1 {
 		label := w.extractStringValue(args[0])
 		fmt.Printf("\033[1;36m[OUTPUT]\033[0m %s", label)
@@ -34,7 +31,6 @@ func (w *ASTWalker) handleOutput(args []interface{}) {
 	}
 }
 
-// printValue prints a value with proper formatting
 func (w *ASTWalker) printValue(value interface{}) {
 	switch v := value.(type) {
 	case string:

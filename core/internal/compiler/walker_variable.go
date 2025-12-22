@@ -7,23 +7,20 @@ import (
 	"github.com/tblang/core/parser"
 )
 
-// EnterVariableDeclaration handles declare statements
 func (w *ASTWalker) EnterVariableDeclaration(ctx *parser.VariableDeclarationContext) {
-	// Skip if already processed (but not if we're in manual execution mode)
+
 	if !w.inManualExecution && w.processedContexts != nil && w.processedContexts[ctx] {
 		return
 	}
 
 	varName := ctx.IDENTIFIER().GetText()
 
-	// Check if the expression is a function call (resource declaration)
 	expr := ctx.Expression()
 	if exprCtx, ok := expr.(*parser.ExpressionContext); ok {
 		if exprCtx.FunctionCall() != nil {
 			funcCallCtx := exprCtx.FunctionCall().(*parser.FunctionCallContext)
 			funcName := funcCallCtx.IDENTIFIER().GetText()
 
-			// If it's a resource type, process it as a resource
 			if w.isResourceType(funcName) {
 				args := w.extractArguments(funcCallCtx.ArgumentList())
 
@@ -31,7 +28,6 @@ func (w *ASTWalker) EnterVariableDeclaration(ctx *parser.VariableDeclarationCont
 					resourceName := w.extractStringValue(args[0])
 					resourceConfig := args[1]
 
-					// Create resource
 					props := w.convertToMap(resourceConfig)
 					resource := &ast.Resource{
 						Name:       resourceName,
@@ -43,7 +39,6 @@ func (w *ASTWalker) EnterVariableDeclaration(ctx *parser.VariableDeclarationCont
 					w.compiler.resources[resourceName] = resource
 					fmt.Printf("Created resource: %s (%s)\n", resourceName, funcName)
 
-					// Store variable reference to the resource
 					if w.variables == nil {
 						w.variables = make(map[string]interface{})
 					}
@@ -62,7 +57,6 @@ func (w *ASTWalker) EnterVariableDeclaration(ctx *parser.VariableDeclarationCont
 		}
 	}
 
-	// Regular variable declaration
 	value := w.evaluateExpression(ctx.Expression())
 
 	if w.variables == nil {
@@ -70,7 +64,6 @@ func (w *ASTWalker) EnterVariableDeclaration(ctx *parser.VariableDeclarationCont
 	}
 	w.variables[varName] = value
 
-	// Store in compiler
 	variable := &ast.Variable{
 		Name:  varName,
 		Value: value,

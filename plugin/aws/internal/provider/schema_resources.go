@@ -2,8 +2,6 @@ package provider
 
 import "github.com/tblang/core/pkg/plugin"
 
-// Resource schema definitions
-
 func getVPCSchema() *plugin.Schema {
 	return &plugin.Schema{
 		Version: 1,

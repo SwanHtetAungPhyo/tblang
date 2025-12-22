@@ -35,7 +35,6 @@ func (c *AWSClient) CreateSecurityGroup(ctx context.Context, vpcID, name, descri
 	}, nil
 }
 
-// AuthorizeSecurityGroupIngress adds ingress rules to a security group
 func (c *AWSClient) AuthorizeSecurityGroupIngress(ctx context.Context, groupID string, rules []types.IpPermission) error {
 	if len(rules) == 0 {
 		return nil
@@ -54,7 +53,6 @@ func (c *AWSClient) AuthorizeSecurityGroupIngress(ctx context.Context, groupID s
 	return nil
 }
 
-// AuthorizeSecurityGroupEgress adds egress rules to a security group
 func (c *AWSClient) AuthorizeSecurityGroupEgress(ctx context.Context, groupID string, rules []types.IpPermission) error {
 	if len(rules) == 0 {
 		return nil
@@ -73,7 +71,6 @@ func (c *AWSClient) AuthorizeSecurityGroupEgress(ctx context.Context, groupID st
 	return nil
 }
 
-// DeleteSecurityGroup deletes a security group
 func (c *AWSClient) DeleteSecurityGroup(ctx context.Context, groupID string) error {
 	input := &ec2.DeleteSecurityGroupInput{
 		GroupId: aws.String(groupID),
@@ -87,7 +84,6 @@ func (c *AWSClient) DeleteSecurityGroup(ctx context.Context, groupID string) err
 	return nil
 }
 
-// DeleteSubnet deletes a subnet
 func (c *AWSClient) DeleteSubnet(ctx context.Context, subnetID string) error {
 	input := &ec2.DeleteSubnetInput{
 		SubnetId: aws.String(subnetID),
@@ -100,10 +96,3 @@ func (c *AWSClient) DeleteSubnet(ctx context.Context, subnetID string) error {
 
 	return nil
 }
-
-// buildTags creates AWS tags from a map
-
-// EC2 Instance types and methods
-
-
-

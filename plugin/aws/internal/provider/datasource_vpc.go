@@ -47,4 +47,3 @@ func (p *AWSProvider) readDataVPC(ctx context.Context, req *plugin.ApplyResource
 		NewState: newState,
 	}, nil
 }
-

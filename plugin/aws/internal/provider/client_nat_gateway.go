@@ -27,11 +27,10 @@ func (c *AWSClient) CreateNATGateway(ctx context.Context, subnetID, allocationID
 
 	natGatewayID := *result.NatGateway.NatGatewayId
 
-	// Wait for NAT gateway to be available
 	waiter := ec2.NewNatGatewayAvailableWaiter(c.EC2Client)
 	err = waiter.Wait(ctx, &ec2.DescribeNatGatewaysInput{
 		NatGatewayIds: []string{natGatewayID},
-	}, 10*60) // 10 minute timeout
+	}, 10*60)
 
 	if err != nil {
 		fmt.Printf("Warning: NAT gateway may not be fully available: %v\n", err)
@@ -43,7 +42,6 @@ func (c *AWSClient) CreateNATGateway(ctx context.Context, subnetID, allocationID
 	}, nil
 }
 
-// DeleteNATGateway deletes a NAT gateway
 func (c *AWSClient) DeleteNATGateway(ctx context.Context, natGatewayID string) error {
 	_, err := c.EC2Client.DeleteNatGateway(ctx, &ec2.DeleteNatGatewayInput{
 		NatGatewayId: aws.String(natGatewayID),
@@ -52,7 +50,6 @@ func (c *AWSClient) DeleteNATGateway(ctx context.Context, natGatewayID string) e
 		return fmt.Errorf("failed to delete NAT gateway: %w", err)
 	}
 
-	// Wait for deletion
 	waiter := ec2.NewNatGatewayDeletedWaiter(c.EC2Client)
 	err = waiter.Wait(ctx, &ec2.DescribeNatGatewaysInput{
 		NatGatewayIds: []string{natGatewayID},
@@ -64,8 +61,3 @@ func (c *AWSClient) DeleteNATGateway(ctx context.Context, natGatewayID string) e
 
 	return nil
 }
-
-// Data Source types and methods
-
-
-

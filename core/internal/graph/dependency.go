@@ -7,20 +7,17 @@ import (
 	"github.com/tblang/core/internal/ast"
 )
 
-// DependencyGraph represents the dependency relationships between resources
 type DependencyGraph struct {
 	nodes map[string]*Node
-	edges map[string][]string // adjacency list: resource -> dependencies
+	edges map[string][]string
 }
 
-// Node represents a resource in the dependency graph
 type Node struct {
 	Resource     *ast.Resource
 	Dependencies []string
 	Dependents   []string
 }
 
-// NewDependencyGraph creates a new dependency graph
 func NewDependencyGraph() *DependencyGraph {
 	return &DependencyGraph{
 		nodes: make(map[string]*Node),
@@ -28,7 +25,6 @@ func NewDependencyGraph() *DependencyGraph {
 	}
 }
 
-// AddResource adds a resource to the dependency graph
 func (dg *DependencyGraph) AddResource(resource *ast.Resource) {
 	node := &Node{
 		Resource:     resource,
@@ -40,7 +36,6 @@ func (dg *DependencyGraph) AddResource(resource *ast.Resource) {
 	dg.edges[resource.Name] = make([]string, 0)
 }
 
-// AnalyzeDependencies analyzes resource properties to find dependencies
 func (dg *DependencyGraph) AnalyzeDependencies() error {
 	for _, node := range dg.nodes {
 		deps := dg.extractDependencies(node.Resource)
@@ -53,7 +48,6 @@ func (dg *DependencyGraph) AnalyzeDependencies() error {
 	return nil
 }
 
-// extractDependencies extracts resource dependencies from properties
 func (dg *DependencyGraph) extractDependencies(resource *ast.Resource) []string {
 	var dependencies []string
 
@@ -65,13 +59,12 @@ func (dg *DependencyGraph) extractDependencies(resource *ast.Resource) []string 
 	return dependencies
 }
 
-// findResourceReferences recursively finds resource references in values
 func (dg *DependencyGraph) findResourceReferences(value interface{}) []string {
 	var refs []string
 
 	switch v := value.(type) {
 	case string:
-		// Check if this string is a resource name (but not the current resource)
+
 		if _, exists := dg.nodes[v]; exists {
 			refs = append(refs, v)
 		}
@@ -90,42 +83,36 @@ func (dg *DependencyGraph) findResourceReferences(value interface{}) []string {
 	return refs
 }
 
-// AddDependency adds a dependency relationship
 func (dg *DependencyGraph) AddDependency(resource, dependency string) error {
-	// Don't allow self-dependencies
+
 	if resource == dependency {
 		return nil
 	}
 
-	// Check if both resources exist
 	if _, exists := dg.nodes[resource]; !exists {
 		return fmt.Errorf("resource %s not found", resource)
 	}
 	if _, exists := dg.nodes[dependency]; !exists {
-		// Dependency might be a variable reference, skip for now
+
 		return nil
 	}
 
-	// Check if dependency already exists to avoid duplicates
 	for _, existingDep := range dg.edges[resource] {
 		if existingDep == dependency {
-			return nil // Already exists
+			return nil
 		}
 	}
 
-	// Add to adjacency list
 	dg.edges[resource] = append(dg.edges[resource], dependency)
 
-	// Update node dependencies
 	dg.nodes[resource].Dependencies = append(dg.nodes[resource].Dependencies, dependency)
 	dg.nodes[dependency].Dependents = append(dg.nodes[dependency].Dependents, resource)
 
 	return nil
 }
 
-// TopologicalSort returns resources in dependency order
 func (dg *DependencyGraph) TopologicalSort() ([]*ast.Resource, error) {
-	// Check for cycles
+
 	if dg.hasCycle() {
 		return nil, fmt.Errorf("circular dependency detected")
 	}
@@ -145,7 +132,6 @@ func (dg *DependencyGraph) TopologicalSort() ([]*ast.Resource, error) {
 
 		temp[name] = true
 
-		// Visit all dependencies first
 		for _, dep := range dg.edges[name] {
 			if err := visit(dep); err != nil {
 				return err
@@ -162,7 +148,6 @@ func (dg *DependencyGraph) TopologicalSort() ([]*ast.Resource, error) {
 		return nil
 	}
 
-	// Visit all nodes
 	for name := range dg.nodes {
 		if !visited[name] {
 			if err := visit(name); err != nil {
@@ -174,7 +159,6 @@ func (dg *DependencyGraph) TopologicalSort() ([]*ast.Resource, error) {
 	return result, nil
 }
 
-// hasCycle detects if there are circular dependencies
 func (dg *DependencyGraph) hasCycle() bool {
 	visited := make(map[string]bool)
 	recStack := make(map[string]bool)
@@ -205,7 +189,6 @@ func (dg *DependencyGraph) hasCycle() bool {
 	return false
 }
 
-// GetDependencies returns direct dependencies of a resource
 func (dg *DependencyGraph) GetDependencies(resourceName string) []string {
 	if node, exists := dg.nodes[resourceName]; exists {
 		return node.Dependencies
@@ -213,7 +196,6 @@ func (dg *DependencyGraph) GetDependencies(resourceName string) []string {
 	return nil
 }
 
-// GetDependents returns resources that depend on the given resource
 func (dg *DependencyGraph) GetDependents(resourceName string) []string {
 	if node, exists := dg.nodes[resourceName]; exists {
 		return node.Dependents
@@ -221,11 +203,9 @@ func (dg *DependencyGraph) GetDependents(resourceName string) []string {
 	return nil
 }
 
-// PrintGraph prints the dependency graph for debugging
 func (dg *DependencyGraph) PrintGraph() {
 	fmt.Println("=== Dependency Graph ===")
 
-	// Sort resource names for consistent output
 	var names []string
 	for name := range dg.nodes {
 		names = append(names, name)

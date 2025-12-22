@@ -23,7 +23,7 @@ func (p *AWSProvider) applySubnet(ctx context.Context, req *plugin.ApplyResource
 	vpcID, _ := config["vpc_id"].(string)
 	cidrBlock, _ := config["cidr_block"].(string)
 	availabilityZone, _ := config["availability_zone"].(string)
-	
+
 	if vpcID == "" || cidrBlock == "" || availabilityZone == "" {
 		return &plugin.ApplyResourceChangeResponse{
 			Diagnostics: []*plugin.Diagnostic{
@@ -36,7 +36,6 @@ func (p *AWSProvider) applySubnet(ctx context.Context, req *plugin.ApplyResource
 		}, nil
 	}
 
-	// Create Subnet using AWS client
 	subnet, err := p.client.CreateSubnet(ctx, vpcID, cidrBlock, availabilityZone, extractTags(config))
 	if err != nil {
 		return &plugin.ApplyResourceChangeResponse{
@@ -50,17 +49,15 @@ func (p *AWSProvider) applySubnet(ctx context.Context, req *plugin.ApplyResource
 		}, nil
 	}
 
-	// Configure public IP mapping if specified
 	if mapPublicIP, exists := config["map_public_ip"]; exists {
 		if mapPublic, ok := mapPublicIP.(bool); ok && mapPublic {
 			if err := p.client.ConfigureSubnetPublicIP(ctx, subnet.SubnetID, true); err != nil {
-				// Log warning but don't fail
+
 				fmt.Printf("Warning: failed to configure public IP mapping: %v\n", err)
 			}
 		}
 	}
 
-	// Return new state
 	newState := make(map[string]interface{})
 	for k, v := range config {
 		newState[k] = v
@@ -100,7 +97,6 @@ func (p *AWSProvider) destroySubnet(ctx context.Context, req *plugin.ApplyResour
 		}, nil
 	}
 
-	// Delete Subnet using AWS client
 	if err := p.client.DeleteSubnet(ctx, subnetID); err != nil {
 		return &plugin.ApplyResourceChangeResponse{
 			Diagnostics: []*plugin.Diagnostic{
@@ -113,9 +109,7 @@ func (p *AWSProvider) destroySubnet(ctx context.Context, req *plugin.ApplyResour
 		}, nil
 	}
 
-	// Return nil state to indicate resource is destroyed
 	return &plugin.ApplyResourceChangeResponse{
 		NewState: nil,
 	}, nil
 }
-

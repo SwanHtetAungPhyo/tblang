@@ -7,7 +7,6 @@ import (
 	"github.com/tblang/core/pkg/plugin"
 )
 
-// ApplyResourceChange applies changes to a resource
 func (p *AWSProvider) ApplyResourceChange(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
 	if p.client == nil {
 		return &plugin.ApplyResourceChangeResponse{
@@ -21,14 +20,12 @@ func (p *AWSProvider) ApplyResourceChange(ctx context.Context, req *plugin.Apply
 		}, nil
 	}
 
-	// Check if this is a destroy operation (planned state is nil/empty but prior state exists)
 	isDestroy := req.PlannedState == nil && req.PriorState != nil
 
 	if isDestroy {
 		return p.handleDestroy(ctx, req)
 	}
 
-	// Handle create/update operations
 	return p.handleCreateOrUpdate(ctx, req)
 }
 
@@ -50,7 +47,7 @@ func (p *AWSProvider) handleDestroy(ctx context.Context, req *plugin.ApplyResour
 		return p.destroyEIP(ctx, req)
 	case "nat_gateway":
 		return p.destroyNATGateway(ctx, req)
-	// Data sources don't need destroy
+
 	case "data_ami", "data_vpc", "data_subnet", "data_availability_zones", "data_caller_identity":
 		return &plugin.ApplyResourceChangeResponse{NewState: nil}, nil
 	default:
@@ -84,7 +81,7 @@ func (p *AWSProvider) handleCreateOrUpdate(ctx context.Context, req *plugin.Appl
 		return p.applyEIP(ctx, req)
 	case "nat_gateway":
 		return p.applyNATGateway(ctx, req)
-	// Data sources
+
 	case "data_ami":
 		return p.readDataAMI(ctx, req)
 	case "data_vpc":

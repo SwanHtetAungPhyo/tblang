@@ -5,7 +5,6 @@ import (
 	"github.com/tblang/core/internal/state"
 )
 
-// calculateChanges compares desired state with current state
 func (e *Engine) calculateChanges(program *compiler.Program, currentState *state.State) *PlanChanges {
 	changes := &PlanChanges{
 		Create: make([]*state.ResourceState, 0),
@@ -24,7 +23,6 @@ func (e *Engine) calculateChanges(program *compiler.Program, currentState *state
 		}
 	}
 
-	// Check for resources to delete (exist in state but not in config)
 	programResources := make(map[string]bool)
 	for _, resource := range program.Resources {
 		programResources[resource.Name] = true

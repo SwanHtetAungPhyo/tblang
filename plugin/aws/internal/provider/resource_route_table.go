@@ -46,7 +46,6 @@ func (p *AWSProvider) applyRouteTable(ctx context.Context, req *plugin.ApplyReso
 		}, nil
 	}
 
-	// Add routes if specified
 	if routes, exists := config["routes"]; exists {
 		if routeList, ok := routes.([]interface{}); ok {
 			for _, route := range routeList {
@@ -54,7 +53,7 @@ func (p *AWSProvider) applyRouteTable(ctx context.Context, req *plugin.ApplyReso
 					destCIDR, _ := routeMap["destination_cidr"].(string)
 					gatewayID, _ := routeMap["gateway_id"].(string)
 					natGatewayID, _ := routeMap["nat_gateway_id"].(string)
-					
+
 					if destCIDR != "" {
 						if err := p.client.CreateRoute(ctx, rt.RouteTableID, destCIDR, gatewayID, natGatewayID); err != nil {
 							fmt.Printf("Warning: failed to create route: %v\n", err)
@@ -119,6 +118,3 @@ func (p *AWSProvider) destroyRouteTable(ctx context.Context, req *plugin.ApplyRe
 		NewState: nil,
 	}, nil
 }
-
-// EIP methods
-

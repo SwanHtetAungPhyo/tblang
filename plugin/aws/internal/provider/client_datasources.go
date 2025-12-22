@@ -14,7 +14,6 @@ func (c *AWSClient) DescribeAMI(ctx context.Context, owners []string, filters []
 		Owners: owners,
 	}
 
-	// Add filters
 	for _, f := range filters {
 		input.Filters = append(input.Filters, types.Filter{
 			Name:   aws.String(f.Name),
@@ -31,10 +30,9 @@ func (c *AWSClient) DescribeAMI(ctx context.Context, owners []string, filters []
 		return nil, fmt.Errorf("no AMIs found matching criteria")
 	}
 
-	// Sort by creation date if most_recent is true
 	images := result.Images
 	if mostRecent && len(images) > 1 {
-		// Simple sort - find the most recent
+
 		var mostRecentImage types.Image
 		var mostRecentDate string
 		for _, img := range images {
@@ -64,8 +62,6 @@ func (c *AWSClient) DescribeAMI(ctx context.Context, owners []string, filters []
 	}, nil
 }
 
-
-// DescribeVPC finds a VPC
 func (c *AWSClient) DescribeVPC(ctx context.Context, vpcID string, isDefault bool) (*VPCDataResult, error) {
 	input := &ec2.DescribeVpcsInput{}
 
@@ -99,8 +95,6 @@ func (c *AWSClient) DescribeVPC(ctx context.Context, vpcID string, isDefault boo
 	}, nil
 }
 
-
-// DescribeSubnet finds a subnet
 func (c *AWSClient) DescribeSubnet(ctx context.Context, subnetID, vpcID string) (*SubnetDataResult, error) {
 	input := &ec2.DescribeSubnetsInput{}
 
@@ -134,8 +128,6 @@ func (c *AWSClient) DescribeSubnet(ctx context.Context, subnetID, vpcID string) 
 	}, nil
 }
 
-
-// DescribeAvailabilityZones lists availability zones
 func (c *AWSClient) DescribeAvailabilityZones(ctx context.Context, state string) (*AvailabilityZonesResult, error) {
 	input := &ec2.DescribeAvailabilityZonesInput{}
 
@@ -169,8 +161,6 @@ func (c *AWSClient) DescribeAvailabilityZones(ctx context.Context, state string)
 	}, nil
 }
 
-
-// GetCallerIdentity gets the caller's AWS identity
 func (c *AWSClient) GetCallerIdentity(ctx context.Context) (*CallerIdentityResult, error) {
 	result, err := c.STSClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
@@ -183,5 +173,3 @@ func (c *AWSClient) GetCallerIdentity(ctx context.Context) (*CallerIdentityResul
 		UserID:    *result.UserId,
 	}, nil
 }
-
-// Helper to suppress unused import warning

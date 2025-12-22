@@ -19,7 +19,6 @@ func (p *AWSProvider) readDataAMI(ctx context.Context, req *plugin.ApplyResource
 		}, nil
 	}
 
-	// Extract owners
 	var owners []string
 	if ownersList, exists := config["owners"]; exists {
 		if ownerArr, ok := ownersList.([]interface{}); ok {
@@ -31,7 +30,6 @@ func (p *AWSProvider) readDataAMI(ctx context.Context, req *plugin.ApplyResource
 		}
 	}
 
-	// Extract filters
 	var filters []AMIFilter
 	if filtersList, exists := config["filters"]; exists {
 		if filterArr, ok := filtersList.([]interface{}); ok {
@@ -81,4 +79,3 @@ func (p *AWSProvider) readDataAMI(ctx context.Context, req *plugin.ApplyResource
 		NewState: newState,
 	}, nil
 }
-

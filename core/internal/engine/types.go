@@ -6,7 +6,6 @@ import (
 	"github.com/tblang/core/internal/state"
 )
 
-// Engine is the main TBLang core engine
 type Engine struct {
 	compiler      *compiler.Compiler
 	stateManager  *state.Manager
@@ -14,7 +13,6 @@ type Engine struct {
 	workingDir    string
 }
 
-// PlanChanges represents infrastructure changes
 type PlanChanges struct {
 	Create []*state.ResourceState
 	Update []*state.ResourceState
@@ -22,7 +20,7 @@ type PlanChanges struct {
 }
 
 var (
-	// Color definitions
+
 	successColor = color.New(color.FgGreen, color.Bold)
 	errorColor   = color.New(color.FgRed, color.Bold)
 	warningColor = color.New(color.FgYellow, color.Bold)

@@ -6,7 +6,6 @@ import (
 	"github.com/tblang/core/pkg/plugin"
 )
 
-// GetSchema returns the provider and resource schemas
 func (p *AWSProvider) GetSchema(ctx context.Context, req *plugin.GetSchemaRequest) (*plugin.GetSchemaResponse, error) {
 	return &plugin.GetSchemaResponse{
 		Provider:          getProviderSchema(),

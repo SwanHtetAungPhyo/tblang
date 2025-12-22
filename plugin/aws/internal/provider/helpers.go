@@ -1,6 +1,5 @@
 package provider
 
-// extractTags extracts tags from configuration
 func extractTags(config map[string]interface{}) map[string]string {
 	tags := make(map[string]string)
 

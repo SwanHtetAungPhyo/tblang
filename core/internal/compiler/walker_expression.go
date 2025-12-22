@@ -7,7 +7,6 @@ import (
 	"github.com/tblang/core/parser"
 )
 
-// evaluateExpression evaluates an expression and returns its value
 func (w *ASTWalker) evaluateExpression(expr parser.IExpressionContext) interface{} {
 	if expr == nil {
 		return nil
@@ -45,7 +44,7 @@ func (w *ASTWalker) evaluateExpression(expr parser.IExpressionContext) interface
 					return val
 				}
 			}
-			return varName // Return as string reference
+			return varName
 		}
 		if e.ObjectLiteral() != nil {
 			return w.evaluateObjectLiteral(e.ObjectLiteral())
@@ -56,7 +55,7 @@ func (w *ASTWalker) evaluateExpression(expr parser.IExpressionContext) interface
 		if e.FunctionCall() != nil {
 			return w.evaluateFunctionCall(e.FunctionCall())
 		}
-		// Handle parenthesized expressions
+
 		if e.LPAREN() != nil && e.Expression() != nil {
 			return w.evaluateExpression(e.Expression())
 		}
@@ -96,7 +95,6 @@ func (w *ASTWalker) evaluateFunctionCall(funcCall parser.IFunctionCallContext) i
 		funcName := funcCtx.IDENTIFIER().GetText()
 		args := w.extractArguments(funcCtx.ArgumentList())
 
-		// For resource references, return the resource name
 		if w.isResourceType(funcName) && len(args) > 0 {
 			return w.extractStringValue(args[0])
 		}

@@ -47,4 +47,3 @@ func (p *AWSProvider) readDataSubnet(ctx context.Context, req *plugin.ApplyResou
 		NewState: newState,
 	}, nil
 }
-

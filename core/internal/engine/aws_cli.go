@@ -8,8 +8,6 @@ import (
 	"github.com/tblang/core/internal/state"
 )
 
-// AWS CLI integration methods for testing
-
 func (e *Engine) createVPCWithAWSCLI(resource *state.ResourceState) error {
 	cidrBlock, ok := resource.Attributes["cidr_block"].(string)
 	if !ok {
@@ -18,14 +16,12 @@ func (e *Engine) createVPCWithAWSCLI(resource *state.ResourceState) error {
 
 	infoColor.Printf("  Creating VPC with CIDR: %s\n", cidrBlock)
 
-	// Create VPC using AWS CLI
 	cmd := exec.Command("aws", "ec2", "create-vpc", "--cidr-block", cidrBlock, "--output", "json")
 	output, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("aws cli error: %w", err)
 	}
 
-	// Parse the output to get VPC ID
 	var result map[string]interface{}
 	if err := json.Unmarshal(output, &result); err != nil {
 		return fmt.Errorf("failed to parse AWS CLI output: %w", err)
@@ -41,13 +37,11 @@ func (e *Engine) createVPCWithAWSCLI(resource *state.ResourceState) error {
 		return fmt.Errorf("VPC ID not found in response")
 	}
 
-	// Update resource attributes with actual VPC ID
 	resource.Attributes["vpc_id"] = vpcID
 	resource.Attributes["state"] = vpc["State"]
 
 	successColor.Printf("  VPC created with ID: %s\n", vpcID)
 
-	// Add tags if specified
 	if tags, exists := resource.Attributes["tags"]; exists {
 		if err := e.tagVPCWithAWSCLI(vpcID, tags); err != nil {
 			fmt.Printf("  Warning: failed to tag VPC: %v\n", err)
@@ -83,7 +77,6 @@ func (e *Engine) deleteVPCWithAWSCLI(resource *state.ResourceState) error {
 
 	fmt.Printf("  Deleting VPC: %s\n", vpcID)
 
-	// Delete VPC using AWS CLI
 	cmd := exec.Command("aws", "ec2", "delete-vpc", "--vpc-id", vpcID)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("aws cli error: %w", err)
@@ -94,7 +87,7 @@ func (e *Engine) deleteVPCWithAWSCLI(resource *state.ResourceState) error {
 }
 
 func (e *Engine) createSubnetWithAWSCLI(resource *state.ResourceState, currentState *state.State) error {
-	// Get required parameters
+
 	cidrBlock, ok := resource.Attributes["cidr_block"].(string)
 	if !ok {
 		return fmt.Errorf("cidr_block not found in Subnet configuration")
@@ -105,13 +98,11 @@ func (e *Engine) createSubnetWithAWSCLI(resource *state.ResourceState, currentSt
 		return fmt.Errorf("availability_zone not found in Subnet configuration")
 	}
 
-	// Resolve VPC ID from dependency
 	vpcRef, ok := resource.Attributes["vpc_id"].(string)
 	if !ok {
 		return fmt.Errorf("vpc_id not found in Subnet configuration")
 	}
 
-	// Find the VPC resource in current state
 	var vpcID string
 	for _, res := range currentState.Resources {
 		if res.Name == vpcRef && res.Type == "vpc" {
@@ -155,12 +146,11 @@ func (e *Engine) createSubnetWithAWSCLI(resource *state.ResourceState, currentSt
 	}
 
 	resource.Attributes["subnet_id"] = subnetID
-	resource.Attributes["vpc_id"] = vpcID // Store resolved VPC ID
+	resource.Attributes["vpc_id"] = vpcID
 	resource.Attributes["state"] = subnet["State"]
 
 	successColor.Printf("  Subnet created with ID: %s\n", subnetID)
 
-	// Configure public IP mapping if specified
 	if mapPublicIP, exists := resource.Attributes["map_public_ip"]; exists {
 		if mapPublic, ok := mapPublicIP.(bool); ok && mapPublic {
 			if err := e.configureSubnetPublicIP(subnetID, true); err != nil {
@@ -169,7 +159,6 @@ func (e *Engine) createSubnetWithAWSCLI(resource *state.ResourceState, currentSt
 		}
 	}
 
-	// Add tags if specified
 	if tags, exists := resource.Attributes["tags"]; exists {
 		if err := e.tagSubnetWithAWSCLI(subnetID, tags); err != nil {
 			fmt.Printf("  Warning: failed to tag Subnet: %v\n", err)

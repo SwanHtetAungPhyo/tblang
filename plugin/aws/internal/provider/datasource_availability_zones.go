@@ -40,4 +40,3 @@ func (p *AWSProvider) readDataAvailabilityZones(ctx context.Context, req *plugin
 		NewState: newState,
 	}, nil
 }
-

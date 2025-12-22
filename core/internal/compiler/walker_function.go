@@ -7,30 +7,26 @@ import (
 	"github.com/tblang/core/parser"
 )
 
-// EnterFunctionCall handles function calls (resource declarations)
 func (w *ASTWalker) EnterFunctionCall(ctx *parser.FunctionCallContext) {
-	// Skip if already processed (but not if we're in manual execution mode)
+
 	if !w.inManualExecution && w.processedContexts != nil && w.processedContexts[ctx] {
 		return
 	}
 
 	funcName := ctx.IDENTIFIER().GetText()
 
-	// Handle print function
 	if funcName == "print" {
 		args := w.extractArguments(ctx.ArgumentList())
 		w.handlePrint(args)
 		return
 	}
 
-	// Handle output function (alias for print with formatting)
 	if funcName == "output" {
 		args := w.extractArguments(ctx.ArgumentList())
 		w.handleOutput(args)
 		return
 	}
 
-	// Check if this is a data source function call
 	if w.isDataSourceType(funcName) {
 		args := w.extractArguments(ctx.ArgumentList())
 
@@ -38,7 +34,6 @@ func (w *ASTWalker) EnterFunctionCall(ctx *parser.FunctionCallContext) {
 			dataSourceName := w.extractStringValue(args[0])
 			dataSourceConfig := args[1]
 
-			// Create data source (stored as a special resource type)
 			dataSource := &ast.Resource{
 				Name:       dataSourceName,
 				Type:       funcName,
@@ -52,7 +47,6 @@ func (w *ASTWalker) EnterFunctionCall(ctx *parser.FunctionCallContext) {
 		return
 	}
 
-	// Check if this is a resource function call
 	if w.isResourceType(funcName) {
 		args := w.extractArguments(ctx.ArgumentList())
 
@@ -60,7 +54,6 @@ func (w *ASTWalker) EnterFunctionCall(ctx *parser.FunctionCallContext) {
 			resourceName := w.extractStringValue(args[0])
 			resourceConfig := args[1]
 
-			// Create resource
 			resource := &ast.Resource{
 				Name:       resourceName,
 				Type:       funcName,

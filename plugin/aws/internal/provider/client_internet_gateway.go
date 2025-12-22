@@ -25,13 +25,12 @@ func (c *AWSClient) CreateInternetGateway(ctx context.Context, vpcID string, tag
 
 	gatewayID := *result.InternetGateway.InternetGatewayId
 
-	// Attach to VPC
 	_, err = c.EC2Client.AttachInternetGateway(ctx, &ec2.AttachInternetGatewayInput{
 		InternetGatewayId: aws.String(gatewayID),
 		VpcId:             aws.String(vpcID),
 	})
 	if err != nil {
-		// Try to delete the gateway if attach fails
+
 		c.EC2Client.DeleteInternetGateway(ctx, &ec2.DeleteInternetGatewayInput{
 			InternetGatewayId: aws.String(gatewayID),
 		})
@@ -43,9 +42,8 @@ func (c *AWSClient) CreateInternetGateway(ctx context.Context, vpcID string, tag
 	}, nil
 }
 
-// DeleteInternetGateway detaches and deletes an internet gateway
 func (c *AWSClient) DeleteInternetGateway(ctx context.Context, gatewayID, vpcID string) error {
-	// Detach from VPC first
+
 	if vpcID != "" {
 		_, err := c.EC2Client.DetachInternetGateway(ctx, &ec2.DetachInternetGatewayInput{
 			InternetGatewayId: aws.String(gatewayID),
@@ -56,7 +54,6 @@ func (c *AWSClient) DeleteInternetGateway(ctx context.Context, gatewayID, vpcID 
 		}
 	}
 
-	// Delete the gateway
 	_, err := c.EC2Client.DeleteInternetGateway(ctx, &ec2.DeleteInternetGatewayInput{
 		InternetGatewayId: aws.String(gatewayID),
 	})
@@ -66,7 +63,3 @@ func (c *AWSClient) DeleteInternetGateway(ctx context.Context, gatewayID, vpcID 
 
 	return nil
 }
-
-// Route Table types and methods
-
-

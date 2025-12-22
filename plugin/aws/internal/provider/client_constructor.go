@@ -8,7 +8,6 @@ import (
 "github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
-// NewAWSClient creates a new AWS client
 func NewAWSClient(region string) (*AWSClient, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(region),

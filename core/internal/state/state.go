@@ -7,21 +7,18 @@ import (
 	"path/filepath"
 )
 
-// State represents the current state of infrastructure
 type State struct {
 	Version   string                    `json:"version"`
 	Resources map[string]*ResourceState `json:"resources"`
 }
 
-// ResourceState represents the state of a single resource
 type ResourceState struct {
 	Name       string                 `json:"name"`
 	Type       string                 `json:"type"`
-	Status     string                 `json:"status"` // created, updating, deleting, etc.
+	Status     string                 `json:"status"`
 	Attributes map[string]interface{} `json:"attributes"`
 }
 
-// Manager handles state persistence
 type Manager struct {
 	stateDir  string
 	stateFile string
@@ -34,7 +31,6 @@ func NewManager(stateDir string) *Manager {
 	}
 }
 
-// LoadState loads the current state from disk
 func (m *Manager) LoadState() (*State, error) {
 	if _, err := os.Stat(m.stateFile); os.IsNotExist(err) {
 		return &State{
@@ -56,9 +52,8 @@ func (m *Manager) LoadState() (*State, error) {
 	return &state, nil
 }
 
-// SaveState saves the current state to disk
 func (m *Manager) SaveState(state *State) error {
-	// Ensure state directory exists
+
 	if err := os.MkdirAll(m.stateDir, 0755); err != nil {
 		return fmt.Errorf("failed to create state directory: %w", err)
 	}
@@ -77,10 +72,9 @@ func (m *Manager) SaveState(state *State) error {
 	return nil
 }
 
-// ClearState removes the state file
 func (m *Manager) ClearState() error {
 	if _, err := os.Stat(m.stateFile); os.IsNotExist(err) {
-		return nil // Already cleared
+		return nil
 	}
 
 	return os.Remove(m.stateFile)
@@ -88,7 +82,7 @@ func (m *Manager) ClearState() error {
 
 func (m *Manager) BackupState() error {
 	if _, err := os.Stat(m.stateFile); os.IsNotExist(err) {
-		return nil // No state to backup
+		return nil
 	}
 
 	backupFile := m.stateFile + ".backup"

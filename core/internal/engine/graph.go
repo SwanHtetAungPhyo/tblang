@@ -10,7 +10,6 @@ import (
 	"github.com/tblang/core/internal/compiler"
 )
 
-// Graph shows the dependency graph
 func (e *Engine) Graph(ctx context.Context, filename string) error {
 	program, err := e.compiler.CompileFile(filename)
 	if err != nil {
@@ -21,21 +20,18 @@ func (e *Engine) Graph(ctx context.Context, filename string) error {
 	return nil
 }
 
-// displayVisualGraph displays a visual representation of the dependency graph
 func (e *Engine) displayVisualGraph(program *compiler.Program) {
 	headerColor.Println("\nDependency Graph & Deployment Order:")
 	headerColor.Println(strings.Repeat("=", 50))
 
-	// Create a simplified dependency map
 	dependencies := make(map[string][]string)
 
-	// Analyze dependencies from resource properties
 	for _, resource := range program.Resources {
 		var deps []string
 		for _, value := range resource.Properties {
 			if refs := e.findResourceReferences(value, program.Resources); len(refs) > 0 {
 				for _, ref := range refs {
-					if ref != resource.Name { // Avoid self-references
+					if ref != resource.Name {
 						deps = append(deps, ref)
 					}
 				}
@@ -44,15 +40,13 @@ func (e *Engine) displayVisualGraph(program *compiler.Program) {
 		dependencies[resource.Name] = e.removeDuplicates(deps)
 	}
 
-	// Display visual graph
 	fmt.Println()
 	for i, resource := range program.Resources {
-		// Resource node with color
+
 		resourceColor := e.getResourceColor(resource.Type)
 		resourceColor.Printf("[%d] %s", i+1, resource.Name)
 		fmt.Printf(" (%s)\n", resource.Type)
 
-		// Show dependencies
 		if deps := dependencies[resource.Name]; len(deps) > 0 {
 			infoColor.Print("    Dependencies: ")
 			for j, dep := range deps {
@@ -72,7 +66,6 @@ func (e *Engine) displayVisualGraph(program *compiler.Program) {
 		}
 	}
 
-	// Display deployment flow
 	fmt.Println()
 	headerColor.Println("Deployment Flow:")
 	headerColor.Println(strings.Repeat("-", 30))
@@ -87,19 +80,17 @@ func (e *Engine) displayVisualGraph(program *compiler.Program) {
 	fmt.Println("\n")
 }
 
-// findResourceReferences finds resource references in a value
 func (e *Engine) findResourceReferences(value interface{}, resources []*ast.Resource) []string {
 	var refs []string
 	resourceNames := make(map[string]bool)
 
-	// Build resource name map
 	for _, res := range resources {
 		resourceNames[res.Name] = true
 	}
 
 	switch v := value.(type) {
 	case string:
-		// Only add if it's a different resource (not self-reference)
+
 		if resourceNames[v] {
 			refs = append(refs, v)
 		}
@@ -116,7 +107,6 @@ func (e *Engine) findResourceReferences(value interface{}, resources []*ast.Reso
 	return refs
 }
 
-// removeDuplicates removes duplicate strings from a slice
 func (e *Engine) removeDuplicates(slice []string) []string {
 	keys := make(map[string]bool)
 	var result []string
@@ -129,7 +119,6 @@ func (e *Engine) removeDuplicates(slice []string) []string {
 	return result
 }
 
-// getResourceColor returns a color for a resource type
 func (e *Engine) getResourceColor(resourceType string) *color.Color {
 	switch resourceType {
 	case "vpc":
@@ -148,7 +137,7 @@ func (e *Engine) getResourceColor(resourceType string) *color.Color {
 		return color.New(color.FgHiGreen, color.Bold)
 	case "nat_gateway":
 		return color.New(color.FgHiYellow, color.Bold)
-	// Data sources
+
 	case "data_ami", "data_vpc", "data_subnet", "data_availability_zones", "data_caller_identity":
 		return color.New(color.FgHiCyan)
 	default:

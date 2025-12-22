@@ -36,7 +36,6 @@ func (c *AWSClient) CreateSubnet(ctx context.Context, vpcID, cidrBlock, availabi
 	}, nil
 }
 
-// ConfigureSubnetPublicIP configures public IP mapping for a subnet
 func (c *AWSClient) ConfigureSubnetPublicIP(ctx context.Context, subnetID string, mapPublicIP bool) error {
 	input := &ec2.ModifySubnetAttributeInput{
 		SubnetId: aws.String(subnetID),
@@ -53,7 +52,6 @@ func (c *AWSClient) ConfigureSubnetPublicIP(ctx context.Context, subnetID string
 	return nil
 }
 
-// DeleteVPC deletes a VPC
 func (c *AWSClient) DeleteVPC(ctx context.Context, vpcID string) error {
 	input := &ec2.DeleteVpcInput{
 		VpcId: aws.String(vpcID),
@@ -66,17 +64,3 @@ func (c *AWSClient) DeleteVPC(ctx context.Context, vpcID string) error {
 
 	return nil
 }
-
-// SecurityGroupResult represents the result of Security Group creation
-
-// CreateSecurityGroup creates a security group and returns the result
-
-// AuthorizeSecurityGroupIngress adds ingress rules to a security group
-
-// AuthorizeSecurityGroupEgress adds egress rules to a security group
-
-// DeleteSecurityGroup deletes a security group
-
-// DeleteSubnet deletes a subnet
-
-// buildTags creates AWS tags from a map

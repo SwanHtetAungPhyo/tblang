@@ -29,7 +29,6 @@ func (c *AWSClient) CreateRouteTable(ctx context.Context, vpcID string, tags map
 	}, nil
 }
 
-// CreateRoute creates a route in a route table
 func (c *AWSClient) CreateRoute(ctx context.Context, routeTableID, destCIDR, gatewayID, natGatewayID string) error {
 	input := &ec2.CreateRouteInput{
 		RouteTableId:         aws.String(routeTableID),
@@ -51,7 +50,6 @@ func (c *AWSClient) CreateRoute(ctx context.Context, routeTableID, destCIDR, gat
 	return nil
 }
 
-// DeleteRouteTable deletes a route table
 func (c *AWSClient) DeleteRouteTable(ctx context.Context, routeTableID string) error {
 	_, err := c.EC2Client.DeleteRouteTable(ctx, &ec2.DeleteRouteTableInput{
 		RouteTableId: aws.String(routeTableID),
@@ -62,7 +60,3 @@ func (c *AWSClient) DeleteRouteTable(ctx context.Context, routeTableID string) e
 
 	return nil
 }
-
-// EIP types and methods
-
-

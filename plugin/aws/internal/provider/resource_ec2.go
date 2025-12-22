@@ -35,12 +35,10 @@ func (p *AWSProvider) applyEC2(ctx context.Context, req *plugin.ApplyResourceCha
 		}, nil
 	}
 
-	// Extract optional parameters
 	keyName, _ := config["key_name"].(string)
 	userData, _ := config["user_data"].(string)
 	associatePublicIP, _ := config["associate_public_ip"].(bool)
-	
-	// Extract security groups
+
 	var securityGroups []string
 	if sgs, exists := config["security_groups"]; exists {
 		if sgList, ok := sgs.([]interface{}); ok {
@@ -52,9 +50,8 @@ func (p *AWSProvider) applyEC2(ctx context.Context, req *plugin.ApplyResourceCha
 		}
 	}
 
-	// Extract root volume configuration
-	var rootVolumeSize int32 = 8 // default
-	var rootVolumeType string = "gp3" // default
+	var rootVolumeSize int32 = 8
+	var rootVolumeType string = "gp3"
 	if size, exists := config["root_volume_size"]; exists {
 		if sizeFloat, ok := size.(float64); ok {
 			rootVolumeSize = int32(sizeFloat)
@@ -66,7 +63,6 @@ func (p *AWSProvider) applyEC2(ctx context.Context, req *plugin.ApplyResourceCha
 		}
 	}
 
-	// Create EC2 instance using AWS client
 	instance, err := p.client.CreateEC2Instance(ctx, &EC2InstanceConfig{
 		AMI:               ami,
 		InstanceType:      instanceType,
@@ -91,7 +87,6 @@ func (p *AWSProvider) applyEC2(ctx context.Context, req *plugin.ApplyResourceCha
 		}, nil
 	}
 
-	// Return new state
 	newState := make(map[string]interface{})
 	for k, v := range config {
 		newState[k] = v
@@ -105,8 +100,6 @@ func (p *AWSProvider) applyEC2(ctx context.Context, req *plugin.ApplyResourceCha
 		NewState: newState,
 	}, nil
 }
-
-// Resource-specific destroy methods
 
 func (p *AWSProvider) destroyEC2(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
 	priorState, ok := req.PriorState.(map[string]interface{})
@@ -135,7 +128,6 @@ func (p *AWSProvider) destroyEC2(ctx context.Context, req *plugin.ApplyResourceC
 		}, nil
 	}
 
-	// Terminate EC2 instance using AWS client
 	if err := p.client.TerminateEC2Instance(ctx, instanceID); err != nil {
 		return &plugin.ApplyResourceChangeResponse{
 			Diagnostics: []*plugin.Diagnostic{
@@ -152,6 +144,3 @@ func (p *AWSProvider) destroyEC2(ctx context.Context, req *plugin.ApplyResourceC
 		NewState: nil,
 	}, nil
 }
-
-// Helper functions
-

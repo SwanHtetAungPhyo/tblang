@@ -8,21 +8,18 @@ import (
 	"github.com/tblang/core/pkg/plugin"
 )
 
-// createResourceWithPlugin creates a resource using the plugin
 func (e *Engine) createResourceWithPlugin(ctx context.Context, resource *state.ResourceState) (interface{}, error) {
-	// Get the AWS plugin
+
 	pluginInstance, err := e.pluginManager.GetPlugin("aws")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get AWS plugin: %w", err)
 	}
 
-	// Resolve resource references in attributes
 	resolvedAttrs := e.resolveResourceReferences(resource.Attributes)
 
-	// Call ApplyResourceChange to create the resource
 	req := &plugin.ApplyResourceChangeRequest{
 		TypeName:     resource.Type,
-		PriorState:   nil, // nil for new resources
+		PriorState:   nil,
 		PlannedState: resolvedAttrs,
 		Config:       resolvedAttrs,
 	}
@@ -32,7 +29,6 @@ func (e *Engine) createResourceWithPlugin(ctx context.Context, resource *state.R
 		return nil, fmt.Errorf("plugin error: %w", err)
 	}
 
-	// Check for diagnostics
 	if len(resp.Diagnostics) > 0 {
 		for _, diag := range resp.Diagnostics {
 			if diag.Severity == "error" {
@@ -46,19 +42,17 @@ func (e *Engine) createResourceWithPlugin(ctx context.Context, resource *state.R
 	return resp.NewState, nil
 }
 
-// destroyResourceWithPlugin destroys a resource using the plugin
 func (e *Engine) destroyResourceWithPlugin(ctx context.Context, resource *state.ResourceState) error {
-	// Get the AWS plugin
+
 	pluginInstance, err := e.pluginManager.GetPlugin("aws")
 	if err != nil {
 		return fmt.Errorf("failed to get AWS plugin: %w", err)
 	}
 
-	// Import the plugin package types
 	req := &plugin.ApplyResourceChangeRequest{
 		TypeName:     resource.Type,
 		PriorState:   resource.Attributes,
-		PlannedState: nil, // nil indicates destroy
+		PlannedState: nil,
 		Config:       resource.Attributes,
 	}
 
@@ -67,7 +61,6 @@ func (e *Engine) destroyResourceWithPlugin(ctx context.Context, resource *state.
 		return fmt.Errorf("plugin error: %w", err)
 	}
 
-	// Check for diagnostics
 	if len(resp.Diagnostics) > 0 {
 		for _, diag := range resp.Diagnostics {
 			if diag.Severity == "error" {

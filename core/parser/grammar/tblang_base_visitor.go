@@ -1,6 +1,5 @@
-// Code generated from grammar/tblang.g4 by ANTLR 4.13.1. DO NOT EDIT.
 
-package parser // tblang
+package parser
 import "github.com/antlr4-go/antlr/v4"
 
 type BasetblangVisitor struct {

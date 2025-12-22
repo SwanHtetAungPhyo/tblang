@@ -87,6 +87,3 @@ func (p *AWSProvider) destroyEIP(ctx context.Context, req *plugin.ApplyResourceC
 		NewState: nil,
 	}, nil
 }
-
-// NAT Gateway methods
-

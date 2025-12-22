@@ -32,7 +32,6 @@ func (p *AWSProvider) applyVPC(ctx context.Context, req *plugin.ApplyResourceCha
 		}, nil
 	}
 
-	// Create VPC using AWS client
 	vpc, err := p.client.CreateVPC(ctx, cidrBlock, extractTags(config))
 	if err != nil {
 		return &plugin.ApplyResourceChangeResponse{
@@ -46,7 +45,6 @@ func (p *AWSProvider) applyVPC(ctx context.Context, req *plugin.ApplyResourceCha
 		}, nil
 	}
 
-	// Return new state
 	newState := make(map[string]interface{})
 	for k, v := range config {
 		newState[k] = v
@@ -58,11 +56,6 @@ func (p *AWSProvider) applyVPC(ctx context.Context, req *plugin.ApplyResourceCha
 		NewState: newState,
 	}, nil
 }
-
-
-
-
-// Resource-specific destroy methods
 
 func (p *AWSProvider) destroyVPC(ctx context.Context, req *plugin.ApplyResourceChangeRequest) (*plugin.ApplyResourceChangeResponse, error) {
 	priorState, ok := req.PriorState.(map[string]interface{})
@@ -91,7 +84,6 @@ func (p *AWSProvider) destroyVPC(ctx context.Context, req *plugin.ApplyResourceC
 		}, nil
 	}
 
-	// Delete VPC using AWS client
 	if err := p.client.DeleteVPC(ctx, vpcID); err != nil {
 		return &plugin.ApplyResourceChangeResponse{
 			Diagnostics: []*plugin.Diagnostic{
@@ -104,9 +96,7 @@ func (p *AWSProvider) destroyVPC(ctx context.Context, req *plugin.ApplyResourceC
 		}, nil
 	}
 
-	// Return nil state to indicate resource is destroyed
 	return &plugin.ApplyResourceChangeResponse{
 		NewState: nil,
 	}, nil
 }
-

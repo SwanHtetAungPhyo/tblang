@@ -2,8 +2,6 @@ package provider
 
 import "github.com/tblang/core/pkg/plugin"
 
-// Data source schema definitions
-
 func getDataAMISchema() *plugin.Schema {
 	return &plugin.Schema{
 		Version: 1,

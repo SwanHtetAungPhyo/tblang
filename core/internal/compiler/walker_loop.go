@@ -6,13 +6,11 @@ import (
 	"github.com/tblang/core/parser"
 )
 
-// EnterForLoop handles for loops
 func (w *ASTWalker) EnterForLoop(ctx *parser.ForLoopContext) {
 	if w.processedContexts != nil && w.processedContexts[ctx] {
 		return
 	}
 
-	// Mark this loop and all its children as processed
 	if w.processedContexts == nil {
 		w.processedContexts = make(map[interface{}]bool)
 	}
@@ -48,18 +46,16 @@ func (w *ASTWalker) EnterForLoop(ctx *parser.ForLoopContext) {
 		fmt.Printf("  No variables available\n")
 	}
 
-	// Save current variables state
 	savedVars := w.variables
 
-	// Execute loop body for each item
 	statements := ctx.AllStatement()
 
 	for _, item := range items {
-		// Create new scope with iterator variable
+
 		if w.variables == nil {
 			w.variables = make(map[string]interface{})
 		} else {
-			// Copy parent scope
+
 			newVars := make(map[string]interface{})
 			for k, v := range savedVars {
 				newVars[k] = v
@@ -67,10 +63,8 @@ func (w *ASTWalker) EnterForLoop(ctx *parser.ForLoopContext) {
 			w.variables = newVars
 		}
 
-		// Set iterator variable in current scope
 		w.variables[iterator] = item
 
-		// Execute each statement in the loop body
 		w.inManualExecution = true
 		for _, stmt := range statements {
 			w.executeStatement(stmt)
@@ -78,11 +72,9 @@ func (w *ASTWalker) EnterForLoop(ctx *parser.ForLoopContext) {
 		w.inManualExecution = false
 	}
 
-	// Restore variables
 	w.variables = savedVars
 }
 
-// markStatementAsProcessed marks a statement and all its children as processed
 func (w *ASTWalker) markStatementAsProcessed(stmt parser.IStatementContext) {
 	stmtCtx := stmt.(*parser.StatementContext)
 
@@ -90,7 +82,6 @@ func (w *ASTWalker) markStatementAsProcessed(stmt parser.IStatementContext) {
 		varDecl := stmtCtx.VariableDeclaration().(*parser.VariableDeclarationContext)
 		w.processedContexts[varDecl] = true
 
-		// Also mark any function calls within the variable declaration
 		expr := varDecl.Expression()
 		if exprCtx, ok := expr.(*parser.ExpressionContext); ok {
 			if exprCtx.FunctionCall() != nil {
@@ -106,12 +97,8 @@ func (w *ASTWalker) markStatementAsProcessed(stmt parser.IStatementContext) {
 	}
 }
 
-// executeStatement processes a single statement
 func (w *ASTWalker) executeStatement(stmt parser.IStatementContext) {
 	stmtCtx := stmt.(*parser.StatementContext)
-
-	// DON'T mark as processed here - we want to allow multiple executions in loops
-	// Instead, we'll mark the loop itself as processed
 
 	if stmtCtx.VariableDeclaration() != nil {
 		ctx := stmtCtx.VariableDeclaration().(*parser.VariableDeclarationContext)

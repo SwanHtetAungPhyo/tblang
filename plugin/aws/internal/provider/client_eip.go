@@ -30,7 +30,6 @@ func (c *AWSClient) AllocateEIP(ctx context.Context, tags map[string]string) (*E
 	}, nil
 }
 
-// ReleaseEIP releases an Elastic IP
 func (c *AWSClient) ReleaseEIP(ctx context.Context, allocationID string) error {
 	_, err := c.EC2Client.ReleaseAddress(ctx, &ec2.ReleaseAddressInput{
 		AllocationId: aws.String(allocationID),
@@ -41,7 +40,3 @@ func (c *AWSClient) ReleaseEIP(ctx context.Context, allocationID string) error {
 
 	return nil
 }
-
-// NAT Gateway types and methods
-
-

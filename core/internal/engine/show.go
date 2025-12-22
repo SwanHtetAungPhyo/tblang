@@ -4,7 +4,6 @@ import (
 	"fmt"
 )
 
-// Show displays current infrastructure state
 func (e *Engine) Show() error {
 	fmt.Println("Current infrastructure state:")
 

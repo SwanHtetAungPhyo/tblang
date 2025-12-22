@@ -23,7 +23,7 @@ func (p *AWSProvider) applySecurityGroup(ctx context.Context, req *plugin.ApplyR
 	vpcID, _ := config["vpc_id"].(string)
 	name, _ := config["name"].(string)
 	description, _ := config["description"].(string)
-	
+
 	if vpcID == "" || name == "" {
 		return &plugin.ApplyResourceChangeResponse{
 			Diagnostics: []*plugin.Diagnostic{
@@ -40,7 +40,6 @@ func (p *AWSProvider) applySecurityGroup(ctx context.Context, req *plugin.ApplyR
 		description = "Managed by TBLang"
 	}
 
-	// Create Security Group using AWS client
 	sg, err := p.client.CreateSecurityGroup(ctx, vpcID, name, description, extractTags(config))
 	if err != nil {
 		return &plugin.ApplyResourceChangeResponse{
@@ -54,25 +53,20 @@ func (p *AWSProvider) applySecurityGroup(ctx context.Context, req *plugin.ApplyR
 		}, nil
 	}
 
-	// Add ingress rules if specified
 	if ingressRules, exists := config["ingress_rules"]; exists {
 		if rules, ok := ingressRules.([]interface{}); ok && len(rules) > 0 {
-			// Convert rules to AWS format
-			// For now, skip rule creation - would need proper conversion
+
 			fmt.Printf("  Note: Ingress rules configuration found but not yet implemented\n")
 		}
 	}
 
-	// Add egress rules if specified
 	if egressRules, exists := config["egress_rules"]; exists {
 		if rules, ok := egressRules.([]interface{}); ok && len(rules) > 0 {
-			// Convert rules to AWS format
-			// For now, skip rule creation - would need proper conversion
+
 			fmt.Printf("  Note: Egress rules configuration found but not yet implemented\n")
 		}
 	}
 
-	// Return new state
 	newState := make(map[string]interface{})
 	for k, v := range config {
 		newState[k] = v
@@ -111,7 +105,6 @@ func (p *AWSProvider) destroySecurityGroup(ctx context.Context, req *plugin.Appl
 		}, nil
 	}
 
-	// Delete Security Group using AWS client
 	if err := p.client.DeleteSecurityGroup(ctx, groupID); err != nil {
 		return &plugin.ApplyResourceChangeResponse{
 			Diagnostics: []*plugin.Diagnostic{
@@ -124,9 +117,7 @@ func (p *AWSProvider) destroySecurityGroup(ctx context.Context, req *plugin.Appl
 		}, nil
 	}
 
-	// Return nil state to indicate resource is destroyed
 	return &plugin.ApplyResourceChangeResponse{
 		NewState: nil,
 	}, nil
 }
-

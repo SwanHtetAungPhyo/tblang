@@ -6,8 +6,6 @@ import (
 	"github.com/tblang/core/parser"
 )
 
-// Helper methods
-
 func (w *ASTWalker) isResourceType(funcName string) bool {
 	resourceTypes := []string{"vpc", "subnet", "security_group", "ec2", "internet_gateway", "route_table", "eip", "nat_gateway"}
 	for _, rt := range resourceTypes {

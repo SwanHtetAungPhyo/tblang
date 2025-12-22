@@ -101,6 +101,3 @@ func (p *AWSProvider) destroyInternetGateway(ctx context.Context, req *plugin.Ap
 		NewState: nil,
 	}, nil
 }
-
-// Route Table methods
-

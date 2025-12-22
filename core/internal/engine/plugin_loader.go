@@ -8,9 +8,8 @@ import (
 	"github.com/tblang/core/internal/compiler"
 )
 
-// loadRequiredPlugins loads plugins without configuring them (for plan)
 func (e *Engine) loadRequiredPlugins(ctx context.Context, program *compiler.Program) error {
-	// Extract required providers from cloud_vendor blocks
+
 	for providerName, config := range program.CloudVendors {
 		infoColor.Printf("Found provider: %s\n", providerName)
 		fmt.Printf("  Region: %v\n", config.Properties["region"])
@@ -32,13 +31,11 @@ func (e *Engine) loadRequiredPlugins(ctx context.Context, program *compiler.Prog
 	return nil
 }
 
-// loadAndConfigurePlugins loads and configures plugins
 func (e *Engine) loadAndConfigurePlugins(ctx context.Context, program *compiler.Program) error {
 	for providerName, config := range program.CloudVendors {
 		infoColor.Printf("Found provider: %s\n", providerName)
 		fmt.Printf("  Region: %v\n", config.Properties["region"])
 
-		// Set AWS profile if specified in configuration
 		if profile, exists := config.Properties["profile"]; exists {
 			if profileStr, ok := profile.(string); ok {
 				os.Setenv("AWS_PROFILE", profileStr)

@@ -5,14 +5,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
-// AWSClient wraps AWS SDK clients
 type AWSClient struct {
 	EC2Client *ec2.Client
 	STSClient *sts.Client
 	Region    string
 }
 
-// Result types for various AWS resources
 type VPCResult struct {
 	VPCID string
 	State string

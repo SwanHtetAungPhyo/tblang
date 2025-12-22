@@ -102,6 +102,3 @@ func (p *AWSProvider) destroyNATGateway(ctx context.Context, req *plugin.ApplyRe
 		NewState: nil,
 	}, nil
 }
-
-// Data Source methods
-
