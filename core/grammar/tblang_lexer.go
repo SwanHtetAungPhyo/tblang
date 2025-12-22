@@ -1,4 +1,3 @@
-// Code generated from grammar/tblang.g4 by ANTLR 4.13.1. DO NOT EDIT.
 
 package parser
 
@@ -9,7 +8,6 @@ import (
 	"unicode"
 )
 
-// Suppress unused import error
 var _ = fmt.Printf
 var _ = sync.Once{}
 var _ = unicode.IsLetter
@@ -18,7 +16,7 @@ type tblangLexer struct {
 	*antlr.BaseLexer
 	channelNames []string
 	modeNames    []string
-	// TODO: EOF string
+
 }
 
 var TblangLexerLexerStaticData struct {
@@ -147,16 +145,11 @@ func tblanglexerLexerInit() {
 	}
 }
 
-// tblangLexerInit initializes any static state used to implement tblangLexer. By default the
-// static state used to implement the lexer is lazily initialized during the first call to
-// NewtblangLexer(). You can call this function if you wish to initialize the static state ahead
-// of time.
 func TblangLexerInit() {
 	staticData := &TblangLexerLexerStaticData
 	staticData.once.Do(tblanglexerLexerInit)
 }
 
-// NewtblangLexer produces a new lexer instance for the optional input antlr.CharStream.
 func NewtblangLexer(input antlr.CharStream) *tblangLexer {
 	TblangLexerInit()
 	l := new(tblangLexer)
@@ -169,12 +162,10 @@ func NewtblangLexer(input antlr.CharStream) *tblangLexer {
 	l.LiteralNames = staticData.LiteralNames
 	l.SymbolicNames = staticData.SymbolicNames
 	l.GrammarFileName = "tblang.g4"
-	// TODO: l.EOF = antlr.TokenEOF
 
 	return l
 }
 
-// tblangLexer tokens.
 const (
 	tblangLexerDECLARE        = 1
 	tblangLexerFOR            = 2

@@ -14,14 +14,12 @@ import (
 	"github.com/tblang/core/pkg/plugin"
 )
 
-// PluginManager handles plugin discovery, lifecycle, and communication
 type PluginManager struct {
 	pluginDir string
 	plugins   map[string]*Plugin
 	mu        sync.RWMutex
 }
 
-// Plugin represents a loaded provider plugin
 type Plugin struct {
 	Name       string
 	Version    string
@@ -31,7 +29,6 @@ type Plugin struct {
 	configured bool
 }
 
-// NewPluginManager creates a new plugin manager
 func NewPluginManager(pluginDir string) *PluginManager {
 	return &PluginManager{
 		pluginDir: pluginDir,
@@ -39,17 +36,16 @@ func NewPluginManager(pluginDir string) *PluginManager {
 	}
 }
 
-// DiscoverPlugins discovers available plugins in the plugin directory
 func (m *PluginManager) DiscoverPlugins() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if _, err := os.Stat(m.pluginDir); os.IsNotExist(err) {
-		// Create plugin directory if it doesn't exist
+
 		if err := os.MkdirAll(m.pluginDir, 0755); err != nil {
 			return fmt.Errorf("failed to create plugin directory: %w", err)
 		}
-		return nil // No plugins to discover yet
+		return nil
 	}
 
 	entries, err := os.ReadDir(m.pluginDir)
@@ -67,22 +63,19 @@ func (m *PluginManager) DiscoverPlugins() error {
 			continue
 		}
 
-		// Extract provider name from filename
-		// e.g., tblang-provider-aws -> aws
 		providerName := strings.TrimPrefix(name, "tblang-provider-")
 		if idx := strings.Index(providerName, "_"); idx != -1 {
 			providerName = providerName[:idx]
 		}
 
 		pluginPath := filepath.Join(m.pluginDir, name)
-		
-		// Check if file is executable
+
 		if info, err := os.Stat(pluginPath); err == nil {
-			if info.Mode()&0111 != 0 { // Check execute permission
+			if info.Mode()&0111 != 0 {
 				m.plugins[providerName] = &Plugin{
 					Name:    providerName,
 					Path:    pluginPath,
-					Version: "1.0.0", // TODO: Extract from plugin metadata
+					Version: "1.0.0",
 				}
 			}
 		}
@@ -91,7 +84,6 @@ func (m *PluginManager) DiscoverPlugins() error {
 	return nil
 }
 
-// LoadPlugin loads and starts a specific plugin
 func (m *PluginManager) LoadPlugin(ctx context.Context, providerName string) (*Plugin, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -102,14 +94,12 @@ func (m *PluginManager) LoadPlugin(ctx context.Context, providerName string) (*P
 	}
 
 	if pluginInstance.Client != nil {
-		return pluginInstance, nil // Already loaded
+		return pluginInstance, nil
 	}
 
-	// Start the plugin process
 	cmd := exec.CommandContext(ctx, pluginInstance.Path)
 	cmd.Env = append(os.Environ(), "TBLANG_PLUGIN_MODE=1")
-	
-	// Create pipes for communication
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
@@ -123,16 +113,14 @@ func (m *PluginManager) LoadPlugin(ctx context.Context, providerName string) (*P
 	pluginInstance.Process = cmd.Process
 	fmt.Printf("Plugin process started with PID: %d\n", cmd.Process.Pid)
 
-	// Read connection info from plugin
 	var connectionInfo map[string]interface{}
 	decoder := json.NewDecoder(stdout)
-	
-	// Add timeout for reading connection info
+
 	done := make(chan error, 1)
 	go func() {
 		done <- decoder.Decode(&connectionInfo)
 	}()
-	
+
 	select {
 	case err := <-done:
 		if err != nil {
@@ -144,7 +132,6 @@ func (m *PluginManager) LoadPlugin(ctx context.Context, providerName string) (*P
 		return nil, fmt.Errorf("timeout waiting for plugin connection info")
 	}
 
-	// Connect to plugin
 	address, ok := connectionInfo["address"].(string)
 	if !ok {
 		cmd.Process.Kill()
@@ -157,7 +144,6 @@ func (m *PluginManager) LoadPlugin(ctx context.Context, providerName string) (*P
 		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
 
-	// Wait a bit for the plugin to be ready
 	time.Sleep(100 * time.Millisecond)
 
 	client, err := plugin.NewGRPCClient(address)
@@ -171,7 +157,6 @@ func (m *PluginManager) LoadPlugin(ctx context.Context, providerName string) (*P
 	return pluginInstance, nil
 }
 
-// GetPlugin returns a loaded plugin
 func (m *PluginManager) GetPlugin(providerName string) (*Plugin, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -188,7 +173,6 @@ func (m *PluginManager) GetPlugin(providerName string) (*Plugin, error) {
 	return plugin, nil
 }
 
-// ConfigurePlugin configures a plugin with the given configuration
 func (m *PluginManager) ConfigurePlugin(ctx context.Context, providerName string, config interface{}) error {
 	pluginInstance, err := m.GetPlugin(providerName)
 	if err != nil {
@@ -196,7 +180,7 @@ func (m *PluginManager) ConfigurePlugin(ctx context.Context, providerName string
 	}
 
 	req := &plugin.ConfigureRequest{
-		TerraformVersion: "1.0.0", // TBLang version
+		TerraformVersion: "1.0.0",
 		Config:           config,
 	}
 
@@ -217,7 +201,6 @@ func (m *PluginManager) ConfigurePlugin(ctx context.Context, providerName string
 	return nil
 }
 
-// ShutdownAll shuts down all loaded plugins
 func (m *PluginManager) ShutdownAll() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -238,7 +221,6 @@ func (m *PluginManager) ShutdownAll() error {
 	return nil
 }
 
-// ListPlugins returns a list of discovered plugins
 func (m *PluginManager) ListPlugins() []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -249,4 +231,3 @@ func (m *PluginManager) ListPlugins() []string {
 	}
 	return names
 }
-

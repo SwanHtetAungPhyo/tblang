@@ -1,6 +1,5 @@
-// Code generated from tblang.g4 by ANTLR 4.13.1. DO NOT EDIT.
 
-package parser // tblang
+package parser
 
 import (
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// Suppress unused import errors
 var _ = fmt.Printf
 var _ = strconv.Itoa
 var _ = sync.Once{}
@@ -121,16 +119,11 @@ func tblangParserInit() {
 	}
 }
 
-// tblangParserInit initializes any static state used to implement tblangParser. By default the
-// static state used to implement the parser is lazily initialized during the first call to
-// NewtblangParser(). You can call this function if you wish to initialize the static state ahead
-// of time.
 func TblangParserInit() {
 	staticData := &TblangParserStaticData
 	staticData.once.Do(tblangParserInit)
 }
 
-// NewtblangParser produces a new parser instance for the optional input antlr.TokenStream.
 func NewtblangParser(input antlr.TokenStream) *tblangParser {
 	TblangParserInit()
 	this := new(tblangParser)
@@ -145,7 +138,6 @@ func NewtblangParser(input antlr.TokenStream) *tblangParser {
 	return this
 }
 
-// tblangParser tokens.
 const (
 	tblangParserEOF            = antlr.TokenEOF
 	tblangParserDECLARE        = 1
@@ -171,7 +163,6 @@ const (
 	tblangParserWS             = 21
 )
 
-// tblangParser rules.
 const (
 	tblangParserRULE_program             = 0
 	tblangParserRULE_statement           = 1
@@ -187,19 +178,15 @@ const (
 	tblangParserRULE_arrayLiteral        = 11
 )
 
-// IProgramContext is an interface to support dynamic dispatch.
 type IProgramContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	EOF() antlr.TerminalNode
 	AllStatement() []IStatementContext
 	Statement(i int) IStatementContext
 
-	// IsProgramContext differentiates from other interfaces.
 	IsProgramContext()
 }
 
@@ -330,7 +317,7 @@ func (p *tblangParser) Program() (localctx IProgramContext) {
 		p.SetState(30)
 		p.Match(tblangParserEOF)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -345,24 +332,20 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IStatementContext is an interface to support dynamic dispatch.
 type IStatementContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	BlockDeclaration() IBlockDeclarationContext
 	VariableDeclaration() IVariableDeclarationContext
 	ForLoop() IForLoopContext
 	FunctionCall() IFunctionCallContext
 	SEMICOLON() antlr.TerminalNode
 
-	// IsStatementContext differentiates from other interfaces.
 	IsStatementContext()
 }
 
@@ -530,7 +513,7 @@ func (p *tblangParser) Statement() (localctx IStatementContext) {
 			p.SetState(36)
 			p.Match(tblangParserSEMICOLON)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -549,17 +532,14 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IBlockDeclarationContext is an interface to support dynamic dispatch.
 type IBlockDeclarationContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	IDENTIFIER() antlr.TerminalNode
 	STRING_LITERAL() antlr.TerminalNode
 	LBRACE() antlr.TerminalNode
@@ -567,7 +547,6 @@ type IBlockDeclarationContext interface {
 	AllProperty() []IPropertyContext
 	Property(i int) IPropertyContext
 
-	// IsBlockDeclarationContext differentiates from other interfaces.
 	IsBlockDeclarationContext()
 }
 
@@ -690,7 +669,7 @@ func (p *tblangParser) BlockDeclaration() (localctx IBlockDeclarationContext) {
 		p.SetState(39)
 		p.Match(tblangParserIDENTIFIER)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -698,7 +677,7 @@ func (p *tblangParser) BlockDeclaration() (localctx IBlockDeclarationContext) {
 		p.SetState(40)
 		p.Match(tblangParserSTRING_LITERAL)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -706,7 +685,7 @@ func (p *tblangParser) BlockDeclaration() (localctx IBlockDeclarationContext) {
 		p.SetState(41)
 		p.Match(tblangParserLBRACE)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -734,7 +713,7 @@ func (p *tblangParser) BlockDeclaration() (localctx IBlockDeclarationContext) {
 		p.SetState(48)
 		p.Match(tblangParserRBRACE)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -749,24 +728,20 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IVariableDeclarationContext is an interface to support dynamic dispatch.
 type IVariableDeclarationContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	DECLARE() antlr.TerminalNode
 	IDENTIFIER() antlr.TerminalNode
 	ASSIGN() antlr.TerminalNode
 	Expression() IExpressionContext
 	SEMICOLON() antlr.TerminalNode
 
-	// IsVariableDeclarationContext differentiates from other interfaces.
 	IsVariableDeclarationContext()
 }
 
@@ -862,7 +837,7 @@ func (p *tblangParser) VariableDeclaration() (localctx IVariableDeclarationConte
 		p.SetState(50)
 		p.Match(tblangParserDECLARE)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -870,7 +845,7 @@ func (p *tblangParser) VariableDeclaration() (localctx IVariableDeclarationConte
 		p.SetState(51)
 		p.Match(tblangParserIDENTIFIER)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -878,7 +853,7 @@ func (p *tblangParser) VariableDeclaration() (localctx IVariableDeclarationConte
 		p.SetState(52)
 		p.Match(tblangParserASSIGN)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -894,12 +869,12 @@ func (p *tblangParser) VariableDeclaration() (localctx IVariableDeclarationConte
 			p.SetState(54)
 			p.Match(tblangParserSEMICOLON)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
 
-	} else if p.HasError() { // JIM
+	} else if p.HasError() {
 		goto errorExit
 	}
 
@@ -913,17 +888,14 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IForLoopContext is an interface to support dynamic dispatch.
 type IForLoopContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	FOR() antlr.TerminalNode
 	IDENTIFIER() antlr.TerminalNode
 	IN() antlr.TerminalNode
@@ -933,7 +905,6 @@ type IForLoopContext interface {
 	AllStatement() []IStatementContext
 	Statement(i int) IStatementContext
 
-	// IsForLoopContext differentiates from other interfaces.
 	IsForLoopContext()
 }
 
@@ -1076,7 +1047,7 @@ func (p *tblangParser) ForLoop() (localctx IForLoopContext) {
 		p.SetState(57)
 		p.Match(tblangParserFOR)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1084,7 +1055,7 @@ func (p *tblangParser) ForLoop() (localctx IForLoopContext) {
 		p.SetState(58)
 		p.Match(tblangParserIDENTIFIER)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1092,7 +1063,7 @@ func (p *tblangParser) ForLoop() (localctx IForLoopContext) {
 		p.SetState(59)
 		p.Match(tblangParserIN)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1104,7 +1075,7 @@ func (p *tblangParser) ForLoop() (localctx IForLoopContext) {
 		p.SetState(61)
 		p.Match(tblangParserLBRACE)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1132,7 +1103,7 @@ func (p *tblangParser) ForLoop() (localctx IForLoopContext) {
 		p.SetState(68)
 		p.Match(tblangParserRBRACE)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1147,23 +1118,19 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IPropertyContext is an interface to support dynamic dispatch.
 type IPropertyContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	IDENTIFIER() antlr.TerminalNode
 	ASSIGN() antlr.TerminalNode
 	Expression() IExpressionContext
 	SEMICOLON() antlr.TerminalNode
 
-	// IsPropertyContext differentiates from other interfaces.
 	IsPropertyContext()
 }
 
@@ -1257,7 +1224,7 @@ func (p *tblangParser) Property() (localctx IPropertyContext) {
 		p.SetState(70)
 		p.Match(tblangParserIDENTIFIER)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1265,7 +1232,7 @@ func (p *tblangParser) Property() (localctx IPropertyContext) {
 		p.SetState(71)
 		p.Match(tblangParserASSIGN)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1285,7 +1252,7 @@ func (p *tblangParser) Property() (localctx IPropertyContext) {
 			p.SetState(73)
 			p.Match(tblangParserSEMICOLON)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -1302,24 +1269,20 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IFunctionCallContext is an interface to support dynamic dispatch.
 type IFunctionCallContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	IDENTIFIER() antlr.TerminalNode
 	LPAREN() antlr.TerminalNode
 	RPAREN() antlr.TerminalNode
 	ArgumentList() IArgumentListContext
 	SEMICOLON() antlr.TerminalNode
 
-	// IsFunctionCallContext differentiates from other interfaces.
 	IsFunctionCallContext()
 }
 
@@ -1417,7 +1380,7 @@ func (p *tblangParser) FunctionCall() (localctx IFunctionCallContext) {
 		p.SetState(76)
 		p.Match(tblangParserIDENTIFIER)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1425,7 +1388,7 @@ func (p *tblangParser) FunctionCall() (localctx IFunctionCallContext) {
 		p.SetState(77)
 		p.Match(tblangParserLPAREN)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1447,7 +1410,7 @@ func (p *tblangParser) FunctionCall() (localctx IFunctionCallContext) {
 		p.SetState(81)
 		p.Match(tblangParserRPAREN)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -1459,12 +1422,12 @@ func (p *tblangParser) FunctionCall() (localctx IFunctionCallContext) {
 			p.SetState(82)
 			p.Match(tblangParserSEMICOLON)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
 
-	} else if p.HasError() { // JIM
+	} else if p.HasError() {
 		goto errorExit
 	}
 
@@ -1478,23 +1441,19 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IArgumentListContext is an interface to support dynamic dispatch.
 type IArgumentListContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	AllExpression() []IExpressionContext
 	Expression(i int) IExpressionContext
 	AllCOMMA() []antlr.TerminalNode
 	COMMA(i int) antlr.TerminalNode
 
-	// IsArgumentListContext differentiates from other interfaces.
 	IsArgumentListContext()
 }
 
@@ -1621,7 +1580,7 @@ func (p *tblangParser) ArgumentList() (localctx IArgumentListContext) {
 			p.SetState(86)
 			p.Match(tblangParserCOMMA)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -1648,17 +1607,14 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IExpressionContext is an interface to support dynamic dispatch.
 type IExpressionContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	STRING_LITERAL() antlr.TerminalNode
 	NUMBER() antlr.TerminalNode
 	BOOLEAN() antlr.TerminalNode
@@ -1671,7 +1627,6 @@ type IExpressionContext interface {
 	RPAREN() antlr.TerminalNode
 	DOT() antlr.TerminalNode
 
-	// IsExpressionContext differentiates from other interfaces.
 	IsExpressionContext()
 }
 
@@ -1829,7 +1784,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 	_parentState := p.GetState()
 	localctx = NewExpressionContext(p, p.GetParserRuleContext(), _parentState)
 	var _prevctx IExpressionContext = localctx
-	var _ antlr.ParserRuleContext = _prevctx // TODO: To prevent unused variable warning.
+	var _ antlr.ParserRuleContext = _prevctx
 	_startState := 16
 	p.EnterRecursionRule(localctx, 16, tblangParserRULE_expression, _p)
 	var _alt int
@@ -1847,7 +1802,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 			p.SetState(94)
 			p.Match(tblangParserSTRING_LITERAL)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -1857,7 +1812,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 			p.SetState(95)
 			p.Match(tblangParserNUMBER)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -1867,7 +1822,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 			p.SetState(96)
 			p.Match(tblangParserBOOLEAN)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -1877,7 +1832,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 			p.SetState(97)
 			p.Match(tblangParserIDENTIFIER)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -1905,7 +1860,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 			p.SetState(101)
 			p.Match(tblangParserLPAREN)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -1917,7 +1872,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 			p.SetState(103)
 			p.Match(tblangParserRPAREN)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -1953,7 +1908,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(108)
 				p.Match(tblangParserDOT)
 				if p.HasError() {
-					// Recognition error - abort rule
+
 					goto errorExit
 				}
 			}
@@ -1961,7 +1916,7 @@ func (p *tblangParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(109)
 				p.Match(tblangParserIDENTIFIER)
 				if p.HasError() {
-					// Recognition error - abort rule
+
 					goto errorExit
 				}
 			}
@@ -1988,23 +1943,19 @@ errorExit:
 	}
 	p.UnrollRecursionContexts(_parentctx)
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IObjectLiteralContext is an interface to support dynamic dispatch.
 type IObjectLiteralContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	LBRACE() antlr.TerminalNode
 	RBRACE() antlr.TerminalNode
 	AllObjectProperty() []IObjectPropertyContext
 	ObjectProperty(i int) IObjectPropertyContext
 
-	// IsObjectLiteralContext differentiates from other interfaces.
 	IsObjectLiteralContext()
 }
 
@@ -2119,7 +2070,7 @@ func (p *tblangParser) ObjectLiteral() (localctx IObjectLiteralContext) {
 		p.SetState(115)
 		p.Match(tblangParserLBRACE)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -2147,7 +2098,7 @@ func (p *tblangParser) ObjectLiteral() (localctx IObjectLiteralContext) {
 		p.SetState(122)
 		p.Match(tblangParserRBRACE)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -2162,24 +2113,20 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IObjectPropertyContext is an interface to support dynamic dispatch.
 type IObjectPropertyContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	IDENTIFIER() antlr.TerminalNode
 	Expression() IExpressionContext
 	COLON() antlr.TerminalNode
 	ASSIGN() antlr.TerminalNode
 	COMMA() antlr.TerminalNode
 
-	// IsObjectPropertyContext differentiates from other interfaces.
 	IsObjectPropertyContext()
 }
 
@@ -2277,7 +2224,7 @@ func (p *tblangParser) ObjectProperty() (localctx IObjectPropertyContext) {
 		p.SetState(124)
 		p.Match(tblangParserIDENTIFIER)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -2308,7 +2255,7 @@ func (p *tblangParser) ObjectProperty() (localctx IObjectPropertyContext) {
 			p.SetState(127)
 			p.Match(tblangParserCOMMA)
 			if p.HasError() {
-				// Recognition error - abort rule
+
 				goto errorExit
 			}
 		}
@@ -2325,17 +2272,14 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
-// IArrayLiteralContext is an interface to support dynamic dispatch.
 type IArrayLiteralContext interface {
 	antlr.ParserRuleContext
 
-	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
-	// Getter signatures
 	LBRACKET() antlr.TerminalNode
 	RBRACKET() antlr.TerminalNode
 	AllExpression() []IExpressionContext
@@ -2343,7 +2287,6 @@ type IArrayLiteralContext interface {
 	AllCOMMA() []antlr.TerminalNode
 	COMMA(i int) antlr.TerminalNode
 
-	// IsArrayLiteralContext differentiates from other interfaces.
 	IsArrayLiteralContext()
 }
 
@@ -2466,7 +2409,7 @@ func (p *tblangParser) ArrayLiteral() (localctx IArrayLiteralContext) {
 		p.SetState(130)
 		p.Match(tblangParserLBRACKET)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -2494,7 +2437,7 @@ func (p *tblangParser) ArrayLiteral() (localctx IArrayLiteralContext) {
 				p.SetState(132)
 				p.Match(tblangParserCOMMA)
 				if p.HasError() {
-					// Recognition error - abort rule
+
 					goto errorExit
 				}
 			}
@@ -2516,7 +2459,7 @@ func (p *tblangParser) ArrayLiteral() (localctx IArrayLiteralContext) {
 		p.SetState(141)
 		p.Match(tblangParserRBRACKET)
 		if p.HasError() {
-			// Recognition error - abort rule
+
 			goto errorExit
 		}
 	}
@@ -2531,7 +2474,7 @@ errorExit:
 	}
 	p.ExitRule()
 	return localctx
-	goto errorExit // Trick to prevent compiler error if the label is not used
+	goto errorExit
 }
 
 func (p *tblangParser) Sempred(localctx antlr.RuleContext, ruleIndex, predIndex int) bool {

@@ -4,31 +4,23 @@ import (
 	"context"
 )
 
-// ProviderPlugin defines the interface that all provider plugins must implement
 type ProviderPlugin interface {
-	// GetSchema returns the provider and resource schemas
+
 	GetSchema(ctx context.Context, req *GetSchemaRequest) (*GetSchemaResponse, error)
-	
-	// Configure configures the provider with the given configuration
+
 	Configure(ctx context.Context, req *ConfigureRequest) (*ConfigureResponse, error)
-	
-	// PlanResourceChange plans changes for a resource
+
 	PlanResourceChange(ctx context.Context, req *PlanResourceChangeRequest) (*PlanResourceChangeResponse, error)
-	
-	// ApplyResourceChange applies changes to a resource
+
 	ApplyResourceChange(ctx context.Context, req *ApplyResourceChangeRequest) (*ApplyResourceChangeResponse, error)
-	
-	// ReadResource reads the current state of a resource
+
 	ReadResource(ctx context.Context, req *ReadResourceRequest) (*ReadResourceResponse, error)
-	
-	// ImportResource imports an existing resource
+
 	ImportResource(ctx context.Context, req *ImportResourceRequest) (*ImportResourceResponse, error)
-	
-	// ValidateResourceConfig validates a resource configuration
+
 	ValidateResourceConfig(ctx context.Context, req *ValidateResourceConfigRequest) (*ValidateResourceConfigResponse, error)
 }
 
-// Schema definitions
 type Schema struct {
 	Version   int64             `json:"version"`
 	Block     *SchemaBlock      `json:"block"`
@@ -55,7 +47,6 @@ type BlockType struct {
 	MaxItems    int64        `json:"max_items"`
 }
 
-// Request/Response types
 type GetSchemaRequest struct{}
 
 type GetSchemaResponse struct {
