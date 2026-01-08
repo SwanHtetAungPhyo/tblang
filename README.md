@@ -5,7 +5,7 @@
 Modern Infrastructure as Code language with plugin architecture.
 
 
-## Full Documentation 
+## Full Documentation
 
 http://tblang.dev.s3-website-us-east-1.amazonaws.com/
 
@@ -36,6 +36,60 @@ TBLang follows a modular compiler architecture designed for extensibility and pe
 - **Plugin System**: gRPC-based provider architecture for cloud vendors
 
 ## Quick Start
+
+### Prerequisites
+
+Before using TBLang, ensure you have the following installed and configured:
+
+#### AWS CLI and Credentials
+
+TBLang requires AWS CLI to be installed and properly configured with your credentials:
+
+```bash
+# Install AWS CLI (if not already installed)
+# macOS
+brew install awscli
+
+# Linux
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+# Windows
+# Download and run the AWS CLI MSI installer from AWS website
+```
+
+Configure your AWS credentials:
+
+```bash
+# Configure AWS credentials
+aws configure
+
+# Or set environment variables
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
+export AWS_DEFAULT_REGION=us-east-1
+
+# Or use AWS profiles
+aws configure --profile myprofile
+```
+
+Verify your AWS configuration:
+
+```bash
+# Test AWS connectivity
+aws sts get-caller-identity
+
+# List available regions
+aws ec2 describe-regions --output table
+```
+
+#### System Requirements
+
+- **Operating System**: Linux, macOS, or Windows
+- **Architecture**: x86_64 or ARM64
+- **Memory**: Minimum 512MB RAM
+- **Disk Space**: 100MB for TBLang binary and dependencies
 
 ### Installation
 
@@ -239,10 +293,10 @@ TBLang uses a gRPC-based plugin architecture for cloud providers:
 ```go
 // Provider interface
 type Provider interface {
-    Configure(config map[string]interface{}) error
-    Plan(resources []Resource) (*Plan, error)
-    Apply(plan *Plan) (*State, error)
-    Destroy(resources []Resource) error
+Configure(config map[string]interface{}) error
+Plan(resources []Resource) (*Plan, error)
+Apply(plan *Plan) (*State, error)
+Destroy(resources []Resource) error
 }
 ```
 
